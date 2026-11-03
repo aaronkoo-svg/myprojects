@@ -1,0 +1,68 @@
+# GoalMorning
+
+매일 아침 나의 비전과 목표를 다시 떠올리게 해주는 앱.
+
+- 기획: [PLAN.md](PLAN.md)
+- 디자인: [DESIGN.md](DESIGN.md)
+
+## 내 폰에서 실행해보기
+
+처음 한 번만 준비하면, 다음부터는 3번만 하면 돼요.
+
+### 1. 준비물 설치 (처음 한 번)
+
+1. **컴퓨터**에 [Node.js](https://nodejs.org) 설치 (LTS 버전, 설치 버튼만 누르면 됨)
+2. **컴퓨터**에 [Git](https://git-scm.com/downloads) 설치 (Mac은 보통 이미 있음)
+3. **폰**에 **Expo Go** 앱 설치 (앱스토어 / 플레이스토어에서 "Expo Go" 검색)
+
+### 2. 코드 내려받기 (처음 한 번)
+
+컴퓨터에서 터미널(Mac: "터미널" 앱, Windows: "PowerShell")을 열고 한 줄씩 입력:
+
+```bash
+git clone https://github.com/aaronkoo-svg/myprojects.git
+```
+
+```bash
+cd myprojects/GoalMorning
+```
+
+```bash
+npm install
+```
+
+### 3. 실행
+
+```bash
+npx expo start
+```
+
+화면에 QR 코드가 나오면:
+
+- **아이폰**: 기본 카메라 앱으로 QR 코드를 찍고, 뜨는 알림을 누르기
+- **안드로이드**: Expo Go 앱을 열고 "Scan QR code"로 찍기
+
+> 컴퓨터와 폰이 **같은 와이파이**에 있어야 해요.
+> 잘 안 되면 `npx expo start --tunnel` 로 실행해 보세요.
+
+끝낼 때는 터미널에서 `Ctrl + C`.
+
+### 나중에 새 버전 받기
+
+```bash
+git pull
+```
+
+```bash
+npm install
+```
+
+그다음 다시 `npx expo start`.
+
+## 개발자 메모
+
+- Expo SDK 58, Expo Router (`src/app/`), TypeScript
+- 디자인 토큰: `src/constants/theme.ts` (색, 글꼴, 간격)
+- 공통 부품: `src/components/` (`AppText`, `Card`, `Button`, `Screen`, `EmptyState`)
+- 아이콘: `phosphor-react-native`
+- 확인: `npx tsc --noEmit`, 웹 미리보기 `npx expo start --web`
