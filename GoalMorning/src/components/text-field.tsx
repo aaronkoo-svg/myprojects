@@ -1,19 +1,21 @@
 import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, type TextInputProps, type TextStyle } from 'react-native';
 
-import { Radius, Space, Type } from '@/constants/theme';
+import { Radius, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-// 웹 기본 검은 테두리 대신, 포커스 때 강조색 테두리
+// 웹 기본 검은 테두리 대신, 포커스 때 파란 테두리
 const noOutline = Platform.select({ web: { outlineStyle: 'none' } as unknown as TextStyle, default: undefined });
 
+// 한 줄 입력은 알약, 여러 줄 입력은 카드 반경
 export function TextField({ style, multiline, onFocus, onBlur, ...rest }: TextInputProps) {
   const c = useTheme();
   const [focused, setFocused] = useState(false);
   return (
     <TextInput
-      placeholderTextColor={c.textFaint}
+      placeholderTextColor={c.textDisabled}
       selectionColor={c.accent}
+      cursorColor={c.accent}
       multiline={multiline}
       maxFontSizeMultiplier={1.3}
       onFocus={(e) => {
@@ -31,8 +33,9 @@ export function TextField({ style, multiline, onFocus, onBlur, ...rest }: TextIn
         {
           backgroundColor: c.surface,
           color: c.textStrong,
-          borderColor: focused ? c.accent : c.line,
-          borderWidth: focused ? 1.5 : StyleSheet.hairlineWidth,
+          borderColor: focused ? c.accentFocus : c.line,
+          borderWidth: focused ? 2 : 1,
+          paddingHorizontal: focused ? 19 : 20,
         },
         multiline && styles.multi,
         style,
@@ -43,11 +46,6 @@ export function TextField({ style, multiline, onFocus, onBlur, ...rest }: TextIn
 }
 
 const styles = StyleSheet.create({
-  base: {
-    minHeight: 52,
-    borderRadius: Radius.control,
-    paddingHorizontal: Space.lg,
-    paddingVertical: Space.md,
-  },
-  multi: { minHeight: 88, textAlignVertical: 'top' },
+  base: { minHeight: 50, borderRadius: Radius.pill, paddingVertical: 12 },
+  multi: { minHeight: 96, borderRadius: Radius.card, textAlignVertical: 'top', paddingTop: 14 },
 });

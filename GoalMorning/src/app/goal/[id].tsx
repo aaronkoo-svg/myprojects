@@ -1,5 +1,4 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { X } from '@/components/icons';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,13 +18,14 @@ import { tap } from '@/lib/feedback';
 const PARENT_LEVEL: Record<GoalLevel, GoalLevel | null> = { vision: null, long: 'vision', short: 'long' };
 
 const PLACEHOLDER: Record<GoalLevel, { title: string; why: string }> = {
-  vision: { title: '예) 좋아하는 일로 인정받으며 여유롭게 사는 사람', why: '왜 그런 삶을 원하나요?' },
-  long: { title: '예) 영어로 업무 미팅하기', why: '이 목표가 중요한 이유는?' },
-  short: { title: '예) 매일 영어 표현 5개 외우기', why: '한 줄 메모' },
+  vision: { title: '좋아하는 일로 인정받으며 여유롭게 사는 사람', why: '왜 그런 삶을 원하나요?' },
+  long: { title: '영어로 업무 미팅하기', why: '이 목표가 중요한 이유는?' },
+  short: { title: '매일 영어 표현 5개 외우기', why: '한 줄 메모' },
 };
 
 const STATUSES: GoalStatus[] = ['active', 'done', 'paused', 'archived'];
 
+// iOS 시트 형식: 왼쪽 취소, 가운데 제목, 오른쪽 저장
 export default function GoalEditor() {
   const c = useTheme();
   const params = useLocalSearchParams<{ id: string; level?: string; parentId?: string }>();
@@ -44,6 +44,7 @@ export default function GoalEditor() {
 
   const parentLevel = PARENT_LEVEL[level];
   const parents = parentLevel ? activeGoals(data.goals, parentLevel) : [];
+  const canSave = !!title.trim();
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/goals'));
 
@@ -51,13 +52,13 @@ export default function GoalEditor() {
     return (
       <SafeAreaView style={[styles.fill, styles.page, { backgroundColor: c.canvas }]}>
         <AppText variant="body">이 목표를 찾을 수 없어요.</AppText>
-        <Button label="닫기" kind="quiet" onPress={close} />
+        <Button label="닫기" kind="secondary" onPress={close} />
       </SafeAreaView>
     );
   }
 
   const save = () => {
-    if (!title.trim()) return;
+    if (!canSave) return;
     if (existing) updateGoal(existing.id, { title: title.trim(), why: why.trim(), parentId, status });
     else addGoal({ level, title, why, parentId });
     tap('success');
@@ -68,7 +69,7 @@ export default function GoalEditor() {
     if (!existing) return;
     const ok = await confirm({
       title: '목표 지우기',
-      message: '지우면 되돌릴 수 없어요. 아래에 이어진 목표는 남아 있어요. 기록을 남기고 싶다면 ‘보관’을 선택해 주세요.',
+      message: '지우면 되돌릴 수 없어요. 기록을 남기려면 ‘보관’을 선택해 주세요.',
       okLabel: '지우기',
     });
     if (ok) {
@@ -80,12 +81,19 @@ export default function GoalEditor() {
   return (
     <SafeAreaView style={[styles.fill, { backgroundColor: c.canvas }]}>
       <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.topBar}>
-          <AppText variant="label" tone="textFaint">
+        <View style={[styles.navBar, { borderBottomColor: c.hairline }]}>
+          <Pressable hitSlop={12} onPress={close} style={styles.navSide}>
+            <AppText variant="body" tone="accent">
+              취소
+            </AppText>
+          </Pressable>
+          <AppText variant="bodyStrong" numberOfLines={1} style={styles.navTitle}>
             {LevelLabel[level]} {isNew ? '더하기' : '다듬기'}
           </AppText>
-          <Pressable accessibilityLabel="닫기" hitSlop={12} onPress={close} style={styles.close}>
-            <X size={22} color={c.textStrong} />
+          <Pressable hitSlop={12} onPress={save} disabled={!canSave} style={[styles.navSide, styles.navRight]}>
+            <AppText variant="bodyStrong" tone={canSave ? 'accent' : 'textDisabled'}>
+              {isNew ? '추가' : '저장'}
+            </AppText>
           </Pressable>
         </View>
 
@@ -124,7 +132,7 @@ export default function GoalEditor() {
             </Section>
           )}
 
-          <Button label={isNew ? '더하기' : '저장'} disabled={!title.trim()} onPress={save} />
+          <Button label={isNew ? '추가' : '저장'} disabled={!canSave} onPress={save} />
           {!isNew && <Button label="이 목표 지우기" kind="text" onPress={remove} />}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -134,22 +142,24 @@ export default function GoalEditor() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  topBar: {
+  navBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: Layout.screenX,
-    paddingTop: Space.sm,
     minHeight: 52,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  close: { width: 44, height: 44, alignItems: 'flex-end', justifyContent: 'center' },
+  navSide: { width: 64, minHeight: 44, justifyContent: 'center' },
+  navRight: { alignItems: 'flex-end' },
+  navTitle: { flex: 1, textAlign: 'center' },
   page: {
     paddingHorizontal: Layout.screenX,
-    paddingVertical: Space.lg,
+    paddingTop: Space.lg,
+    paddingBottom: Space.xxl,
     gap: Space.xl,
     width: '100%',
     maxWidth: Layout.maxWidth,
     alignSelf: 'center',
   },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Space.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Space.xs },
 });

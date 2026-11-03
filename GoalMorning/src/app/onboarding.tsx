@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import { ArrowLeft } from '@/components/icons';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
 import { Chip } from '@/components/chip';
+import { CaretLeft } from '@/components/icons';
 import { TextField } from '@/components/text-field';
 import { Layout, Space } from '@/constants/theme';
 import { useStore } from '@/data/store';
@@ -54,9 +54,8 @@ const QUESTIONS: Question[] = [
   },
 ];
 
-// 0: 소개, 1~3: 질문, 4: 완료
+// 0: 소개(어두운 무대), 1~3: 질문(밝은 화면), 4: 완료(어두운 무대)
 export default function Onboarding() {
-  const c = useTheme();
   const { addGoal, updateGoal, finishOnboarding } = useStore();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState(QUESTIONS.map(() => ({ title: '', why: '' })));
@@ -88,71 +87,80 @@ export default function Onboarding() {
   const setAnswer = (qi: number, patch: Partial<{ title: string; why: string }>) =>
     setAnswers((as) => as.map((a, i) => (i === qi ? { ...a, ...patch } : a)));
 
+  if (step === 0) {
+    return (
+      <Stage
+        eyebrow="GoalMorning"
+        headline={'매일 아침 1분,\n내 꿈을 다시\n떠올려요'}
+        lead="세 가지 질문에 답하면 준비가 끝나요."
+        primary={{ label: '시작하기', onPress: () => setStep(1) }}
+        secondary={{ label: '일단 둘러볼게요', onPress: done }}
+      />
+    );
+  }
+
+  if (step === 4) {
+    const vision = answers[0].title.trim();
+    return (
+      <Stage
+        eyebrow="준비 완료"
+        headline={'이제 첫 아침을\n시작해봐요'}
+        lead={vision ? `“${vision}”` : '목표는 언제든 ‘목표’ 탭에서 채울 수 있어요.'}
+        primary={{
+          label: '첫 체크인 하기',
+          onPress: () => {
+            tap('success');
+            done();
+          },
+        }}
+      />
+    );
+  }
+
   return (
-    <SafeAreaView style={[styles.fill, { backgroundColor: c.canvas }]}>
-      <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {step === 0 && (
-          <View style={[styles.page, styles.center]}>
-            <View style={styles.introText}>
-              <AppText variant="caption" tone="accent">
-                GoalMorning
-              </AppText>
-              <AppText variant="display">
-                매일 아침 1분,{'\n'}내 꿈을 다시{'\n'}떠올려요
-              </AppText>
-              <AppText variant="quote" tone="textFaint">
-                세 가지 질문에 답하면 준비가 끝나요.
-              </AppText>
-            </View>
-            <View style={styles.actions}>
-              <Button label="시작하기" onPress={() => setStep(1)} />
-              <Button label="일단 둘러볼게요" kind="text" onPress={done} />
-            </View>
-          </View>
-        )}
+    <QuestionStep
+      key={step}
+      index={step - 1}
+      q={QUESTIONS[step - 1]}
+      value={answers[step - 1]}
+      onChange={(p) => setAnswer(step - 1, p)}
+      onBack={() => setStep(step - 1)}
+      onNext={() => saveAndNext(step - 1, false)}
+      onSkip={() => saveAndNext(step - 1, true)}
+    />
+  );
+}
 
-        {step >= 1 && step <= 3 && (
-          <QuestionStep
-            key={step}
-            index={step - 1}
-            q={QUESTIONS[step - 1]}
-            value={answers[step - 1]}
-            onChange={(p) => setAnswer(step - 1, p)}
-            onBack={() => setStep(step - 1)}
-            onNext={() => saveAndNext(step - 1, false)}
-            onSkip={() => saveAndNext(step - 1, true)}
-          />
-        )}
-
-        {step === 4 && (
-          <View style={[styles.page, styles.center]}>
-            <View style={styles.introText}>
-              <AppText variant="caption" tone="accent">
-                준비 완료
-              </AppText>
-              <AppText variant="display">
-                좋아요,{'\n'}이제 첫 아침을{'\n'}시작해봐요
-              </AppText>
-              {answers[0].title.trim() ? (
-                <AppText variant="quote">“{answers[0].title.trim()}”</AppText>
-              ) : (
-                <AppText variant="quote" tone="textFaint">
-                  목표는 언제든 ‘목표’ 탭에서 채울 수 있어요.
-                </AppText>
-              )}
-            </View>
-            <View style={styles.actions}>
-              <Button
-                label="첫 체크인 하러 가기"
-                onPress={() => {
-                  tap('success');
-                  done();
-                }}
-              />
-            </View>
-          </View>
-        )}
-      </KeyboardAvoidingView>
+// 애플 제품 타일처럼: 어두운 면 위에 가운데 정렬된 큰 제목과 알약 버튼
+function Stage(props: {
+  eyebrow: string;
+  headline: string;
+  lead: string;
+  primary: { label: string; onPress: () => void };
+  secondary?: { label: string; onPress: () => void };
+}) {
+  const c = useTheme();
+  return (
+    <SafeAreaView style={[styles.fill, { backgroundColor: c.tile }]}>
+      <View style={styles.stage}>
+        <View style={styles.stageText}>
+          <AppText variant="captionStrong" tone="onTileMuted" style={styles.center}>
+            {props.eyebrow}
+          </AppText>
+          <AppText variant="hero" tone="onTile" style={[styles.center, styles.stageHeadline]}>
+            {props.headline}
+          </AppText>
+          <AppText variant="lead" tone="onTileMuted" style={styles.center}>
+            {props.lead}
+          </AppText>
+        </View>
+        <View style={styles.stageActions}>
+          <Button label={props.primary.label} onPress={props.primary.onPress} />
+          {props.secondary && (
+            <Button label={props.secondary.label} kind="text" onTile onPress={props.secondary.onPress} />
+          )}
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -169,92 +177,103 @@ function QuestionStep(props: {
   const { index, q, value, onChange, onBack, onNext, onSkip } = props;
   const c = useTheme();
   return (
-    <View style={styles.fill}>
-      <View style={styles.topBar}>
-        <Pressable accessibilityLabel="뒤로" hitSlop={12} onPress={onBack} style={styles.back}>
-          <ArrowLeft size={22} color={c.textStrong} />
-        </Pressable>
-        <View style={styles.dots}>
-          {QUESTIONS.map((_, i) => (
-            <View
-              key={i}
-              style={[styles.dot, { backgroundColor: i <= index ? c.accent : c.line, width: i === index ? 20 : 8 }]}
-            />
-          ))}
-        </View>
-        <Pressable hitSlop={12} onPress={onSkip}>
-          <AppText variant="label" tone="textFaint">
-            건너뛰기
-          </AppText>
-        </Pressable>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
-        <View style={styles.qHead}>
-          <AppText variant="caption" tone="accent">
-            {index + 1} / 3 · {q.step}
-          </AppText>
-          <AppText variant="title">{q.question}</AppText>
-          <AppText variant="body" tone="textFaint">
-            {q.hint}
-          </AppText>
-        </View>
-
-        <TextField
-          value={value.title}
-          onChangeText={(t) => onChange({ title: t })}
-          placeholder="여기에 적어주세요"
-          returnKeyType="next"
-          autoFocus={Platform.OS !== 'web'}
-        />
-
-        <View style={styles.examples}>
-          <AppText variant="caption">이런 건 어때요?</AppText>
-          <View style={styles.chips}>
-            {q.examples.map((ex) => (
-              <Chip key={ex} label={ex} selected={value.title === ex} onPress={() => onChange({ title: ex })} />
+    <SafeAreaView style={[styles.fill, { backgroundColor: c.canvas }]}>
+      <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={styles.topBar}>
+          <Pressable accessibilityLabel="뒤로" hitSlop={12} onPress={onBack} style={styles.back}>
+            <CaretLeft size={22} color={c.accent} weight="bold" />
+          </Pressable>
+          <View style={styles.progress}>
+            {QUESTIONS.map((_, i) => (
+              <View key={i} style={[styles.segment, { backgroundColor: i <= index ? c.accent : c.hairline }]} />
             ))}
           </View>
+          <Pressable hitSlop={12} onPress={onSkip} style={styles.skip}>
+            <AppText variant="body" tone="accent">
+              건너뛰기
+            </AppText>
+          </Pressable>
         </View>
 
-        <TextField
-          value={value.why}
-          onChangeText={(t) => onChange({ why: t })}
-          placeholder={q.whyPlaceholder}
-          multiline
-        />
+        <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
+          <View style={styles.qHead}>
+            <AppText variant="captionStrong" tone="textFaint">
+              {index + 1} / 3 · {q.step}
+            </AppText>
+            <AppText variant="title">{q.question}</AppText>
+            <AppText variant="body" tone="textFaint">
+              {q.hint}
+            </AppText>
+          </View>
 
-        <Button label={index === 2 ? '완료' : '다음'} disabled={!value.title.trim()} onPress={onNext} />
-      </ScrollView>
-    </View>
+          <TextField
+            value={value.title}
+            onChangeText={(t) => onChange({ title: t })}
+            placeholder="여기에 적어주세요"
+            returnKeyType="next"
+            autoFocus={Platform.OS !== 'web'}
+          />
+
+          <View style={styles.examples}>
+            <AppText variant="caption">이런 건 어때요?</AppText>
+            <View style={styles.chips}>
+              {q.examples.map((ex) => (
+                <Chip key={ex} label={ex} selected={value.title === ex} onPress={() => onChange({ title: ex })} />
+              ))}
+            </View>
+          </View>
+
+          <TextField
+            value={value.why}
+            onChangeText={(t) => onChange({ why: t })}
+            placeholder={q.whyPlaceholder}
+            multiline
+          />
+
+          <Button label={index === 2 ? '완료' : '다음'} disabled={!value.title.trim()} onPress={onNext} />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  page: {
+  center: { textAlign: 'center' },
+  stage: {
+    flex: 1,
+    justifyContent: 'space-between',
     paddingHorizontal: Layout.screenX,
-    paddingVertical: Space.xl,
-    gap: Space.xl,
+    paddingTop: Space.section * 1.5,
+    paddingBottom: Space.lg,
     width: '100%',
     maxWidth: Layout.maxWidth,
     alignSelf: 'center',
   },
-  center: { flex: 1, justifyContent: 'space-between', paddingTop: Space.xxxl * 2 },
-  introText: { gap: Space.lg },
-  actions: { gap: Space.sm },
+  stageText: { gap: Space.sm, alignItems: 'center' },
+  stageHeadline: { fontSize: 40, lineHeight: 46, letterSpacing: -1.2 },
+  stageActions: { gap: Space.xxs },
+  page: {
+    paddingHorizontal: Layout.screenX,
+    paddingTop: Space.lg,
+    paddingBottom: Space.xxl,
+    gap: Space.lg,
+    width: '100%',
+    maxWidth: Layout.maxWidth,
+    alignSelf: 'center',
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Layout.screenX,
-    paddingTop: Space.sm,
-    minHeight: 48,
+    paddingHorizontal: Layout.screenX - 8,
+    minHeight: 52,
+    gap: Space.sm,
   },
-  back: { width: 44, height: 44, justifyContent: 'center' },
-  dots: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-  dot: { height: 8, borderRadius: 4 },
-  qHead: { gap: Space.sm },
-  examples: { gap: Space.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Space.sm },
+  back: { width: 44, height: 44, justifyContent: 'center', paddingLeft: 8 },
+  progress: { flex: 1, flexDirection: 'row', gap: 4 },
+  segment: { flex: 1, height: 3, borderRadius: 2 },
+  skip: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 },
+  qHead: { gap: Space.xs },
+  examples: { gap: Space.xs },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Space.xs },
 });

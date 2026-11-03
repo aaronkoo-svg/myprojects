@@ -1,8 +1,8 @@
 import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { CalendarCheck, GearSix, Mountains, SunHorizon, type Icon } from '@/components/icons';
-import type { ColorValue } from 'react-native';
+import { StyleSheet, type ColorValue } from 'react-native';
 
+import { CalendarCheck, GearSix, Mountains, SunHorizon, type Icon } from '@/components/icons';
 import { Type } from '@/constants/theme';
 import { useStore } from '@/data/store';
 import { useTheme } from '@/hooks/use-theme';
@@ -10,7 +10,7 @@ import { useTheme } from '@/hooks/use-theme';
 const tabIcon =
   (IconCmp: Icon) =>
   ({ color, focused }: { color: ColorValue; focused: boolean }) => (
-    <IconCmp size={24} color={String(color)} weight={focused ? 'fill' : 'regular'} />
+    <IconCmp size={25} color={String(color)} weight={focused ? 'fill' : 'regular'} />
   );
 
 export default function TabsLayout() {
@@ -26,8 +26,13 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: c.accent,
         tabBarInactiveTintColor: c.textFaint,
-        tabBarStyle: { backgroundColor: c.surface, borderTopColor: c.line },
-        tabBarLabelStyle: { fontFamily: Type.label.fontFamily, fontSize: 11 },
+        tabBarStyle: {
+          backgroundColor: c.canvas,
+          borderTopColor: c.hairline,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          elevation: 0,
+        },
+        tabBarLabelStyle: { fontFamily: Type.caption.fontFamily, fontSize: 10, letterSpacing: -0.1 },
       }}>
       <Tabs.Screen name="index" options={{ title: '오늘', tabBarIcon: tabIcon(SunHorizon) }} />
       <Tabs.Screen name="goals" options={{ title: '목표', tabBarIcon: tabIcon(Mountains) }} />

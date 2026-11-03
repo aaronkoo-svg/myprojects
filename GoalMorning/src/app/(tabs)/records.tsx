@@ -1,9 +1,9 @@
-import { CalendarBlank } from '@/components/icons';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
 import { Card } from '@/components/card';
 import { EmptyState } from '@/components/empty-state';
+import { CalendarBlank } from '@/components/icons';
 import { Screen } from '@/components/screen';
 import { Space } from '@/constants/theme';
 import { useStore } from '@/data/store';
@@ -21,7 +21,7 @@ export default function RecordsScreen() {
 
   return (
     <Screen>
-      <AppText variant="title">기록</AppText>
+      <AppText variant="hero">기록</AppText>
       {data.checkins.length === 0 ? (
         <EmptyState
           icon={CalendarBlank}
@@ -31,14 +31,17 @@ export default function RecordsScreen() {
       ) : (
         <>
           <Card style={styles.hero}>
-            <AppText variant="caption">이번 주 아침</AppText>
-            <AppText variant="display">
-              {weekCount}
-              <AppText variant="title" tone="textFaint">
-                {' '}
+            <AppText variant="captionStrong" tone="textFaint">
+              이번 주 아침
+            </AppText>
+            <View style={styles.bigRow}>
+              <AppText variant="hero" style={styles.bigNumber}>
+                {weekCount}
+              </AppText>
+              <AppText variant="tagline" tone="textFaint">
                 / 7일
               </AppText>
-            </AppText>
+            </View>
             <AppText variant="body" tone="textFaint">
               {weekCount >= 5 ? '꾸준함이 쌓이고 있어요.' : '하루하루가 다 의미 있어요.'}
             </AppText>
@@ -60,15 +63,20 @@ export default function RecordsScreen() {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <Card style={styles.stat}>
-      <AppText variant="title">{value}</AppText>
+      <AppText variant="title" style={styles.tabular}>
+        {value}
+      </AppText>
       <AppText variant="caption">{label}</AppText>
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: { gap: Space.xs },
-  row: { flexDirection: 'row', gap: Space.sm },
-  stat: { flex: 1, padding: Space.lg, gap: 2 },
+  hero: { gap: Space.xxs, paddingVertical: Space.lg },
+  bigRow: { flexDirection: 'row', alignItems: 'baseline', gap: Space.xs },
+  bigNumber: { fontSize: 64, lineHeight: 70, letterSpacing: -2, fontVariant: ['tabular-nums'] },
+  row: { flexDirection: 'row', gap: Space.xs },
+  stat: { flex: 1, padding: Space.md, gap: 2 },
+  tabular: { fontVariant: ['tabular-nums'] },
   center: { textAlign: 'center' },
 });

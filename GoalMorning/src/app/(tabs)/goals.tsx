@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
-import { CaretDown, CaretRight, Check, Compass, Plus } from '@/components/icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
-import { Card } from '@/components/card';
+import { Card, Tile } from '@/components/card';
 import { EmptyState } from '@/components/empty-state';
+import { CaretDown, CaretRight, Check, Compass, Plus } from '@/components/icons';
 import { ProgressBar } from '@/components/progress-bar';
 import { Screen } from '@/components/screen';
 import { Space } from '@/constants/theme';
@@ -33,7 +33,7 @@ export default function GoalsScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <AppText variant="title">목표 지도</AppText>
+        <AppText variant="hero">목표</AppText>
         <AppText variant="body" tone="textFaint">
           꿈에서 이번 주 계획까지, 한 줄로 이어져 있어요.
         </AppText>
@@ -48,22 +48,30 @@ export default function GoalsScreen() {
       )}
 
       {visions.map((v) => (
-        <VisionCard key={v.id} vision={v} goals={goals} />
+        <VisionGroup key={v.id} vision={v} goals={goals} />
       ))}
 
       {(looseLongs.length > 0 || looseShorts.length > 0) && (
-        <Card>
-          <AppText variant="caption">아직 비전과 연결되지 않은 목표</AppText>
-          {looseLongs.map((l) => (
-            <LongBlock key={l.id} goal={l} goals={goals} />
-          ))}
-          {looseShorts.map((s) => (
-            <ShortRow key={s.id} goal={s} />
-          ))}
-        </Card>
+        <View style={styles.group}>
+          <AppText variant="captionStrong" tone="textFaint" style={styles.groupLabel}>
+            비전과 연결되지 않은 목표
+          </AppText>
+          <Card style={styles.groupCard}>
+            {looseLongs.map((l, i) => (
+              <LongBlock key={l.id} goal={l} goals={goals} first={i === 0} />
+            ))}
+            {looseShorts.length > 0 && (
+              <View style={looseLongs.length > 0 && styles.looseShorts}>
+                {looseShorts.map((s) => (
+                  <ShortRow key={s.id} goal={s} />
+                ))}
+              </View>
+            )}
+          </Card>
+        </View>
       )}
 
-      <Button label="비전 더하기" kind={empty ? 'primary' : 'quiet'} onPress={() => newGoal('vision')} />
+      <Button label="비전 더하기" kind={empty ? 'primary' : 'secondary'} onPress={() => newGoal('vision')} />
 
       {archived > 0 && (
         <AppText variant="caption" style={styles.center}>
@@ -74,32 +82,40 @@ export default function GoalsScreen() {
   );
 }
 
-function VisionCard({ vision, goals }: { vision: Goal; goals: Goal[] }) {
+// 비전 하나 = 어두운 타일(비전) + 흰 카드(그 아래 목표들)
+function VisionGroup({ vision, goals }: { vision: Goal; goals: Goal[] }) {
   const longs = childrenOf(goals, vision.id);
   return (
-    <Card style={styles.visionCard}>
-      <Pressable onPress={() => openGoal(vision.id)} style={styles.visionHead}>
-        <AppText variant="caption" tone="accent">
-          미래 비전{vision.status !== 'active' ? ` · ${StatusLabel[vision.status]}` : ''}
-        </AppText>
-        <AppText variant="title">{vision.title}</AppText>
-        {!!vision.why && (
-          <AppText variant="quote" tone="textFaint">
-            {vision.why}
-          </AppText>
+    <View style={styles.visionGroup}>
+      <Pressable onPress={() => openGoal(vision.id)}>
+        {({ pressed }) => (
+          <Tile style={[styles.visionTile, { opacity: pressed ? 0.9 : 1 }]}>
+            <AppText variant="captionStrong" tone="onTileMuted">
+              미래 비전{vision.status !== 'active' ? ` · ${StatusLabel[vision.status]}` : ''}
+            </AppText>
+            <AppText variant="title" tone="onTile">
+              {vision.title}
+            </AppText>
+            {!!vision.why && (
+              <AppText variant="body" tone="onTileMuted">
+                {vision.why}
+              </AppText>
+            )}
+          </Tile>
         )}
       </Pressable>
 
-      {longs.map((l) => (
-        <LongBlock key={l.id} goal={l} goals={goals} />
-      ))}
-
-      <AddLink label="장기 목표 더하기" onPress={() => newGoal('long', vision.id)} />
-    </Card>
+      <Card style={styles.groupCard}>
+        {longs.map((l, i) => (
+          <LongBlock key={l.id} goal={l} goals={goals} first={i === 0} />
+        ))}
+        <AddLink label="장기 목표 더하기" onPress={() => newGoal('long', vision.id)} />
+      </Card>
+    </View>
   );
 }
 
-function LongBlock({ goal, goals }: { goal: Goal; goals: Goal[] }) {
+function LongBlock({ goal, goals, first }: { goal: Goal; goals: Goal[]; first: boolean }) {
   const c = useTheme();
   const [open, setOpen] = useState(true);
   const shorts = childrenOf(goals, goal.id);
@@ -107,11 +123,8 @@ function LongBlock({ goal, goals }: { goal: Goal; goals: Goal[] }) {
   const Caret = open ? CaretDown : CaretRight;
 
   return (
-    <View style={[styles.longBlock, { borderTopColor: c.line }]}>
+    <View style={[styles.longBlock, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.hairline }]}>
       <View style={styles.longHead}>
-        <Pressable accessibilityLabel={open ? '접기' : '펼치기'} hitSlop={10} onPress={() => setOpen(!open)} style={styles.caret}>
-          <Caret size={16} color={c.textFaint} />
-        </Pressable>
         <Pressable style={styles.flex} onPress={() => openGoal(goal.id)}>
           <AppText variant="bodyStrong" tone={goal.status === 'done' ? 'textFaint' : 'textStrong'}>
             {goal.title}
@@ -122,14 +135,17 @@ function LongBlock({ goal, goals }: { goal: Goal; goals: Goal[] }) {
             {progress !== null ? ` · ${Math.round(progress * 100)}%` : ''}
           </AppText>
         </Pressable>
+        <Pressable
+          accessibilityLabel={open ? '접기' : '펼치기'}
+          hitSlop={12}
+          onPress={() => setOpen(!open)}
+          style={styles.caret}>
+          <Caret size={16} color={c.textFaint} weight="bold" />
+        </Pressable>
       </View>
-      {progress !== null && (
-        <View style={styles.indent}>
-          <ProgressBar value={progress} />
-        </View>
-      )}
+      {progress !== null && <ProgressBar value={progress} />}
       {open && (
-        <View style={styles.indent}>
+        <View>
           {shorts.map((s) => (
             <ShortRow key={s.id} goal={s} />
           ))}
@@ -140,7 +156,7 @@ function LongBlock({ goal, goals }: { goal: Goal; goals: Goal[] }) {
   );
 }
 
-// 단기 계획 한 줄: 동그라미로 바로 달성 처리, 글자를 누르면 수정
+// 단기 계획 한 줄: 동그라미로 바로 달성, 글자를 누르면 다듬기
 function ShortRow({ goal }: { goal: Goal }) {
   const c = useTheme();
   const { updateGoal } = useStore();
@@ -150,19 +166,19 @@ function ShortRow({ goal }: { goal: Goal }) {
       <Pressable
         accessibilityRole="checkbox"
         accessibilityState={{ checked: done }}
-        hitSlop={10}
+        hitSlop={12}
         onPress={() => {
           tap(done ? 'light' : 'success');
           updateGoal(goal.id, { status: done ? 'active' : 'done' });
         }}
-        style={[styles.miniCircle, { borderColor: done ? c.success : c.textFaint, backgroundColor: done ? c.success : 'transparent' }]}>
-        {done && <Check size={11} weight="bold" color={c.surface} />}
+        style={[
+          styles.miniCircle,
+          { borderColor: done ? c.accent : c.textDisabled, backgroundColor: done ? c.accent : 'transparent' },
+        ]}>
+        {done && <Check size={11} weight="bold" color={c.onAccent} />}
       </Pressable>
       <Pressable style={styles.flex} onPress={() => openGoal(goal.id)}>
-        <AppText
-          variant="body"
-          tone={done ? 'textFaint' : 'text'}
-          style={done && { textDecorationLine: 'line-through' }}>
+        <AppText variant="body" tone={done ? 'textFaint' : 'text'}>
           {goal.title}
         </AppText>
         {goal.status === 'paused' && <AppText variant="caption">보류 중</AppText>}
@@ -176,7 +192,7 @@ function AddLink({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.addLink, { opacity: pressed ? 0.6 : 1 }]}>
       <Plus size={16} color={c.accent} weight="bold" />
-      <AppText variant="label" tone="accent">
+      <AppText variant="body" tone="accent">
         {label}
       </AppText>
     </Pressable>
@@ -184,16 +200,26 @@ function AddLink({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: Space.xs },
+  header: { gap: Space.xxs },
   flex: { flex: 1, minWidth: 0 },
   center: { textAlign: 'center' },
-  visionCard: { gap: Space.md },
-  visionHead: { gap: Space.xs },
-  longBlock: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: Space.md, gap: Space.sm },
+  visionGroup: { gap: Space.xs },
+  visionTile: { gap: Space.xs },
+  group: { gap: Space.xs },
+  groupLabel: { paddingHorizontal: Space.xxs },
+  groupCard: { paddingVertical: Space.xs, gap: 0 },
+  looseShorts: { marginTop: Space.xs },
+  longBlock: { paddingVertical: Space.sm, gap: Space.xs },
   longHead: { flexDirection: 'row', alignItems: 'flex-start', gap: Space.sm },
-  caret: { width: 20, height: 24, justifyContent: 'center' },
-  indent: { paddingLeft: 28 },
-  shortRow: { flexDirection: 'row', alignItems: 'center', gap: Space.md, minHeight: 44 },
-  miniCircle: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  addLink: { flexDirection: 'row', alignItems: 'center', gap: Space.sm, minHeight: 44 },
+  caret: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+  shortRow: { flexDirection: 'row', alignItems: 'center', gap: Space.sm, minHeight: 44 },
+  miniCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addLink: { flexDirection: 'row', alignItems: 'center', gap: Space.xs, minHeight: 44 },
 });

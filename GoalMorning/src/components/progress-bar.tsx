@@ -6,13 +6,13 @@ export function ProgressBar({ value }: { value: number }) {
   const c = useTheme();
   const pct = Math.max(0, Math.min(1, value)) * 100;
   return (
-    <View style={[styles.track, { backgroundColor: c.accentSoft }]}>
+    <View style={[styles.track, { backgroundColor: c.hairline }]}>
       <View style={[styles.fill, { width: `${pct}%`, backgroundColor: c.accent }]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  track: { height: 6, borderRadius: 3, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 3 },
+  track: { height: 4, borderRadius: 2, overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: 2 },
 });

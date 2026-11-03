@@ -1,14 +1,15 @@
 import { router } from 'expo-router';
-import { BellSimple } from '@/components/icons';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
-import { Button } from '@/components/button';
-import { EmptyState } from '@/components/empty-state';
-import { Screen } from '@/components/screen';
-import { Section } from '@/components/section';
-import { useStore } from '@/data/store';
+import { Card } from '@/components/card';
 import { useConfirm } from '@/components/confirm-dialog';
+import { Screen } from '@/components/screen';
+import { Space } from '@/constants/theme';
+import { useStore } from '@/data/store';
+import { useTheme } from '@/hooks/use-theme';
 
+// iOS 설정 앱처럼: 묶음 제목 + 흰 카드 안의 줄 목록
 export default function SettingsScreen() {
   const { resetAll } = useStore();
   const confirm = useConfirm();
@@ -27,15 +28,63 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
-      <AppText variant="title">설정</AppText>
-      <EmptyState
-        icon={BellSimple}
-        title="알림과 백업은 다음 단계에서 열려요"
-        body="아침·저녁 알림 시간과 데이터 백업을 여기서 정할 수 있게 될 거예요."
-      />
-      <Section title="데이터" hint="이 폰에만 저장돼요.">
-        <Button label="처음부터 다시 시작" kind="quiet" onPress={reset} />
-      </Section>
+      <AppText variant="hero">설정</AppText>
+
+      <Group title="알림" footer="아침·저녁 알림은 다음 업데이트에서 열려요.">
+        <Row label="아침 알림" value="곧 제공" />
+        <Row label="저녁 회고 알림" value="곧 제공" last />
+      </Group>
+
+      <Group title="데이터" footer="모든 기록은 이 폰에만 저장돼요.">
+        <Row label="백업 내보내기" value="곧 제공" />
+        <Row label="처음부터 다시 시작" onPress={reset} action last />
+      </Group>
     </Screen>
   );
 }
+
+function Group({ title, footer, children }: { title: string; footer?: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.group}>
+      <AppText variant="captionStrong" tone="textFaint" style={styles.groupText}>
+        {title}
+      </AppText>
+      <Card style={styles.groupCard}>{children}</Card>
+      {!!footer && (
+        <AppText variant="caption" style={styles.groupText}>
+          {footer}
+        </AppText>
+      )}
+    </View>
+  );
+}
+
+function Row(props: { label: string; value?: string; onPress?: () => void; action?: boolean; last?: boolean }) {
+  const c = useTheme();
+  return (
+    <Pressable
+      disabled={!props.onPress}
+      onPress={props.onPress}
+      style={({ pressed }) => [styles.row, pressed && { backgroundColor: c.canvas }]}>
+      <View style={[styles.rowInner, !props.last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.hairline }]}>
+        <AppText variant="body" tone={props.action ? 'accent' : 'textStrong'} style={styles.flex}>
+          {props.label}
+        </AppText>
+        {!!props.value && (
+          <AppText variant="body" tone="textFaint">
+            {props.value}
+          </AppText>
+        )}
+      </View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  group: { gap: Space.xs },
+  groupText: { paddingHorizontal: Space.md },
+  groupCard: { padding: 0, gap: 0, overflow: 'hidden' },
+  row: { paddingLeft: Space.md },
+  rowInner: { flexDirection: 'row', alignItems: 'center', minHeight: 50, paddingRight: Space.md, gap: Space.sm },
+  flex: { flex: 1, minWidth: 0 },
+});

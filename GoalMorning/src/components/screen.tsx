@@ -5,12 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Layout, Space } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-// 모든 탭 화면의 공통 틀: 아이보리 바탕, 좌우 24 여백, 스크롤
+// 모든 탭 화면의 공통 틀: 옅은 회색 바탕, 좌우 20 여백, 스크롤
 export function Screen({ children }: { children: ReactNode }) {
   const c = useTheme();
   return (
     <SafeAreaView edges={['top']} style={[styles.fill, { backgroundColor: c.canvas }]}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.inner}>{children}</View>
       </ScrollView>
     </SafeAreaView>
@@ -19,6 +19,6 @@ export function Screen({ children }: { children: ReactNode }) {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  content: { paddingHorizontal: Layout.screenX, paddingTop: Space.xl, paddingBottom: Space.xxxl },
+  content: { paddingHorizontal: Layout.screenX, paddingTop: Space.md, paddingBottom: Space.section },
   inner: { width: '100%', maxWidth: Layout.maxWidth, alignSelf: 'center', gap: Space.xl },
 });
