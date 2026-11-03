@@ -1,8 +1,10 @@
+import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { CalendarCheck, GearSix, Mountains, SunHorizon, type Icon } from 'phosphor-react-native';
+import { CalendarCheck, GearSix, Mountains, SunHorizon, type Icon } from '@/components/icons';
 import type { ColorValue } from 'react-native';
 
 import { Type } from '@/constants/theme';
+import { useStore } from '@/data/store';
 import { useTheme } from '@/hooks/use-theme';
 
 const tabIcon =
@@ -13,6 +15,11 @@ const tabIcon =
 
 export default function TabsLayout() {
   const c = useTheme();
+  const { data } = useStore();
+
+  // 처음 쓰는 사람은 온보딩부터
+  if (!data.onboarded) return <Redirect href="/onboarding" />;
+
   return (
     <Tabs
       screenOptions={{

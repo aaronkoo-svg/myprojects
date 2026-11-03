@@ -5,7 +5,9 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { ConfirmProvider } from '@/components/confirm-dialog';
 import { Colors, FontFiles } from '@/constants/theme';
+import { StoreProvider, useStore } from '@/data/store';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 SplashScreen.preventAutoHideAsync();
@@ -13,13 +15,6 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const [fontsLoaded, fontError] = useFonts(FontFiles);
-
-  useEffect(() => {
-    if (fontsLoaded || fontError) SplashScreen.hideAsync();
-  }, [fontsLoaded, fontError]);
-
-  // 폰트가 준비되기 전에는 스플래시 화면을 유지
-  if (!fontsLoaded && !fontError) return null;
 
   const c = Colors[scheme];
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
@@ -36,9 +31,33 @@ export default function RootLayout() {
   };
 
   return (
-    <ThemeProvider value={navTheme}>
-      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false }} />
-    </ThemeProvider>
+    <StoreProvider>
+      <ThemeProvider value={navTheme}>
+        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+        <ConfirmProvider>
+          <Gate fontsReady={fontsLoaded || !!fontError} />
+        </ConfirmProvider>
+      </ThemeProvider>
+    </StoreProvider>
+  );
+}
+
+// 폰트와 저장된 데이터가 모두 준비될 때까지 스플래시 화면 유지
+function Gate({ fontsReady }: { fontsReady: boolean }) {
+  const { ready } = useStore();
+  const allReady = fontsReady && ready;
+
+  useEffect(() => {
+    if (allReady) SplashScreen.hideAsync();
+  }, [allReady]);
+
+  if (!allReady) return null;
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="goal/[id]" options={{ presentation: 'modal' }} />
+    </Stack>
   );
 }
