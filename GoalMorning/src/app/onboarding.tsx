@@ -1,13 +1,26 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useRef, useState } from 'react';
+import {
+  AccessibilityInfo,
+  Animated,
+  Easing,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
 import { Chip } from '@/components/chip';
 import { CaretLeft } from '@/components/icons';
+import { Sky } from '@/components/sky';
 import { TextField } from '@/components/text-field';
+import { OnSky, type SkyPeriod } from '@/constants/sky';
 import { Layout, Space } from '@/constants/theme';
 import { useStore } from '@/data/store';
 import type { GoalLevel } from '@/data/types';
@@ -54,7 +67,7 @@ const QUESTIONS: Question[] = [
   },
 ];
 
-// 0: 소개(어두운 무대), 1~3: 질문(밝은 화면), 4: 완료(어두운 무대)
+// 0: 소개(새벽 하늘), 1~3: 질문(밝은 화면), 4: 완료(아침 하늘)
 export default function Onboarding() {
   const { addGoal, updateGoal, finishOnboarding } = useStore();
   const [step, setStep] = useState(0);
@@ -90,6 +103,7 @@ export default function Onboarding() {
   if (step === 0) {
     return (
       <Stage
+        period="dawn"
         eyebrow="GoalMorning"
         headline={'매일 아침 1분,\n내 꿈을 다시\n떠올려요'}
         lead="세 가지 질문에 답하면 준비가 끝나요."
@@ -103,6 +117,7 @@ export default function Onboarding() {
     const vision = answers[0].title.trim();
     return (
       <Stage
+        period="morning"
         eyebrow="준비 완료"
         headline={'이제 첫 아침을\n시작해봐요'}
         lead={vision ? `“${vision}”` : '목표는 언제든 ‘목표’ 탭에서 채울 수 있어요.'}
@@ -131,37 +146,67 @@ export default function Onboarding() {
   );
 }
 
-// 애플 제품 타일처럼: 어두운 면 위에 가운데 정렬된 큰 제목과 알약 버튼
+// 애플 제품 타일처럼 가운데 정렬된 큰 제목과 알약 버튼. 무대는 하늘, 가운데에 해가 떠오른다
 function Stage(props: {
+  period: SkyPeriod;
   eyebrow: string;
   headline: string;
   lead: string;
   primary: { label: string; onPress: () => void };
   secondary?: { label: string; onPress: () => void };
 }) {
-  const c = useTheme();
+  // 화면이 열리면 해가 한 번 천천히 떠오른다 (동작 줄이기 설정이면 바로 제자리)
+  const rise = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    let cancelled = false;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .catch(() => false)
+      .then((reduce) => {
+        if (cancelled) return;
+        if (reduce) rise.setValue(1);
+        else
+          Animated.timing(rise, {
+            toValue: 1,
+            duration: 1600,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: Platform.OS !== 'web',
+          }).start();
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [rise]);
+
+  const sunMotion = {
+    opacity: rise,
+    transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [90, 0] }) }],
+  };
+
   return (
-    <SafeAreaView style={[styles.fill, { backgroundColor: c.tile }]}>
-      <View style={styles.stage}>
-        <View style={styles.stageText}>
-          <AppText variant="captionStrong" tone="onTileMuted" style={styles.center}>
-            {props.eyebrow}
-          </AppText>
-          <AppText variant="hero" tone="onTile" style={[styles.center, styles.stageHeadline]}>
-            {props.headline}
-          </AppText>
-          <AppText variant="lead" tone="onTileMuted" style={styles.center}>
-            {props.lead}
-          </AppText>
+    <Sky period={props.period} style={styles.fill} sun={{ size: 168, bottom: 210, centered: true }} sunStyle={sunMotion}>
+      <StatusBar style="light" />
+      <SafeAreaView style={styles.fill}>
+        <View style={styles.stage}>
+          <View style={styles.stageText}>
+            <AppText variant="captionStrong" style={[styles.center, styles.onSkyMuted]}>
+              {props.eyebrow}
+            </AppText>
+            <AppText variant="hero" tone="onTile" style={[styles.center, styles.stageHeadline]}>
+              {props.headline}
+            </AppText>
+            <AppText variant="lead" style={[styles.center, styles.onSkyMuted]}>
+              {props.lead}
+            </AppText>
+          </View>
+          <View style={styles.stageActions}>
+            <Button label={props.primary.label} onPress={props.primary.onPress} />
+            {props.secondary && (
+              <Button label={props.secondary.label} kind="text" onTile onPress={props.secondary.onPress} />
+            )}
+          </View>
         </View>
-        <View style={styles.stageActions}>
-          <Button label={props.primary.label} onPress={props.primary.onPress} />
-          {props.secondary && (
-            <Button label={props.secondary.label} kind="text" onTile onPress={props.secondary.onPress} />
-          )}
-        </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </Sky>
   );
 }
 
@@ -240,6 +285,7 @@ function QuestionStep(props: {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   center: { textAlign: 'center' },
+  onSkyMuted: { color: OnSky.muted },
   stage: {
     flex: 1,
     justifyContent: 'space-between',

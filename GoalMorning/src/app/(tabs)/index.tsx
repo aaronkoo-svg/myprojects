@@ -4,15 +4,17 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
-import { Card, Tile } from '@/components/card';
+import { Card } from '@/components/card';
 import { CheckRow } from '@/components/check-row';
 import { Chip } from '@/components/chip';
 import { useConfirm } from '@/components/confirm-dialog';
 import { CaretRight, Plus } from '@/components/icons';
 import { Screen } from '@/components/screen';
 import { Section } from '@/components/section';
+import { Sky } from '@/components/sky';
 import { TextField } from '@/components/text-field';
-import { pressScale, Space } from '@/constants/theme';
+import { OnSky, Skies, skyPeriod } from '@/constants/sky';
+import { pressScale, Radius, Space } from '@/constants/theme';
 import { activeGoals, ancestry, useStore } from '@/data/store';
 import { LevelLabel, type Goal, type Task } from '@/data/types';
 import { useTheme } from '@/hooks/use-theme';
@@ -41,7 +43,7 @@ export default function TodayScreen() {
     <Screen>
       <View style={styles.header}>
         <AppText variant="captionStrong" tone="textFaint">
-          {longDateLabel(now)}
+          {longDateLabel(now)} · {Skies[skyPeriod(now)].label}
         </AppText>
         <AppText variant="hero">{greeting(now)}</AppText>
       </View>
@@ -53,38 +55,40 @@ export default function TodayScreen() {
   );
 }
 
-// 하루의 첫 장면: 어두운 무대 위에 내 비전 한 문장
+// 하루의 첫 장면: 지금 시간의 하늘 위에 내 비전 한 문장, 아래로 해가 떠오른다
+const TILE_SUN = { size: 132, right: -18, bottom: -66 };
+
 function SpotlightTile({ goal }: { goal: Goal }) {
   return (
-    <Tile>
-      <AppText variant="captionStrong" tone="onTileMuted">
+    <Sky style={styles.skyTile} sun={TILE_SUN}>
+      <AppText variant="captionStrong" style={styles.onSkyMuted}>
         {goal.level === 'vision' ? '내가 그리는 모습' : `오늘 마음에 새길 ${LevelLabel[goal.level]}`}
       </AppText>
       <AppText variant="title" tone="onTile">
         {goal.title}
       </AppText>
       {!!goal.why && (
-        <AppText variant="lead" tone="onTileMuted">
+        <AppText variant="lead" style={styles.onSkyMuted}>
           {goal.why}
         </AppText>
       )}
-    </Tile>
+    </Sky>
   );
 }
 
 function NoVisionTile() {
   return (
-    <Tile style={styles.noVision}>
+    <Sky style={styles.skyTile} sun={TILE_SUN}>
       <AppText variant="title" tone="onTile">
         아직 그려둔 꿈이 없어요
       </AppText>
-      <AppText variant="body" tone="onTileMuted">
+      <AppText variant="body" style={styles.onSkyMuted}>
         5년 후 보내고 싶은 하루를 적어두면, 매일 아침 여기서 다시 보여드릴게요.
       </AppText>
       <View style={styles.tileAction}>
         <Button label="비전 그리기" compact onPress={() => router.push('/goal/new?level=vision')} />
       </View>
-    </Tile>
+    </Sky>
   );
 }
 
@@ -335,7 +339,15 @@ function TextLink({ label, onPress }: { label: string; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   header: { gap: Space.xxs },
-  noVision: { gap: Space.sm },
+  skyTile: {
+    borderRadius: Radius.card,
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.lg + 4,
+    paddingBottom: Space.section + 8, // 아래쪽은 해가 뜨는 자리
+    gap: Space.sm,
+  },
+  onSky: { color: OnSky.strong },
+  onSkyMuted: { color: OnSky.muted },
   tileAction: { flexDirection: 'row', marginTop: Space.xs },
   flex: { flex: 1, minWidth: 0 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Space.xs },

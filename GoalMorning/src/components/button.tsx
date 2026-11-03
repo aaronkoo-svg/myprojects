@@ -16,7 +16,8 @@ type Props = {
 
 export function Button({ label, onPress, kind = 'primary', disabled, compact, onTile }: Props) {
   const c = useTheme();
-  const linkTone = onTile ? 'accentOnTile' : 'accent';
+  // 하늘·타일 위의 텍스트 버튼은 흰 글자
+  const linkTone = onTile ? 'onTile' : 'accent';
   return (
     <Pressable
       accessibilityRole="button"
