@@ -1,6 +1,6 @@
-import { useId, type ReactNode } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import type { ReactNode } from 'react';
 import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { Skies, skyPeriod, type SkyPeriod } from '@/constants/sky';
 
@@ -16,19 +16,17 @@ type Props = {
 // 시간대에 맞는 하늘 그라데이션 + 낮게 뜬 해 하나
 export function Sky({ children, period, style, sun, sunStyle }: Props) {
   const sky = Skies[period ?? skyPeriod()];
-  const id = `sky${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   return (
     <View style={[styles.wrap, style]}>
-      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 1 1" preserveAspectRatio="none">
-        <Defs>
-          <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-            {sky.stops.map(([o, c]) => (
-              <Stop key={o} offset={o} stopColor={c} />
-            ))}
-          </LinearGradient>
-        </Defs>
-        <Rect x="0" y="0" width="1" height="1" fill={`url(#${id})`} />
-      </Svg>
+      {/* 폰이 직접 그리는 그라데이션 + 디더링: 안드로이드에서 줄무늬(밴딩) 없이 부드럽게 */}
+      <LinearGradient
+        style={StyleSheet.absoluteFill}
+        colors={sky.stops.map(([, c]) => c) as unknown as readonly [string, string, ...string[]]}
+        locations={sky.stops.map(([o]) => o) as unknown as readonly [number, number, ...number[]]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        dither
+      />
       {sun && (
         <Animated.View
           pointerEvents="none"
