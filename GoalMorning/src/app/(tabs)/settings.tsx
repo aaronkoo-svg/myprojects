@@ -1,4 +1,5 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
@@ -8,11 +9,20 @@ import { Screen } from '@/components/screen';
 import { Space } from '@/constants/theme';
 import { useStore } from '@/data/store';
 import { useTheme } from '@/hooks/use-theme';
+import { getApiKey } from '@/lib/ai-key';
 
 // iOS 설정 앱처럼: 묶음 제목 + 흰 카드 안의 줄 목록
 export default function SettingsScreen() {
   const { resetAll } = useStore();
   const confirm = useConfirm();
+  const [hasKey, setHasKey] = useState(false);
+
+  // 키 화면에서 돌아올 때마다 연결 상태 새로고침
+  useFocusEffect(
+    useCallback(() => {
+      getApiKey().then((k) => setHasKey(!!k));
+    }, []),
+  );
 
   const reset = async () => {
     const ok = await confirm({
@@ -29,6 +39,10 @@ export default function SettingsScreen() {
   return (
     <Screen>
       <AppText variant="hero">설정</AppText>
+
+      <Group title="AI 도우미" footer="윗단계 목표만 적으면 AI가 아랫단계를 제안해요. 내 Anthropic API 키로 동작해요.">
+        <Row label="API 키" value={hasKey ? '연결됨' : '설정하기'} onPress={() => router.push('/ai-key')} last />
+      </Group>
 
       <Group title="알림" footer="아침·저녁 알림은 다음 업데이트에서 열려요.">
         <Row label="아침 알림" value="곧 제공" />

@@ -58,6 +58,8 @@ function Gate({ fontsReady }: { fontsReady: boolean }) {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
       <Stack.Screen name="goal/[id]" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="suggest" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="ai-key" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

@@ -17,11 +17,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
 import { Chip } from '@/components/chip';
-import { CaretLeft } from '@/components/icons';
+import { CaretLeft, CaretRight, Lightbulb } from '@/components/icons';
 import { Sky } from '@/components/sky';
 import { TextField } from '@/components/text-field';
 import { OnSky, type SkyPeriod } from '@/constants/sky';
-import { Layout, Space } from '@/constants/theme';
+import { Layout, pressScale, Radius, Space } from '@/constants/theme';
 import { useStore } from '@/data/store';
 import type { GoalLevel } from '@/data/types';
 import { useTheme } from '@/hooks/use-theme';
@@ -142,6 +142,15 @@ export default function Onboarding() {
       onBack={() => setStep(step - 1)}
       onNext={() => saveAndNext(step - 1, false)}
       onSkip={() => saveAndNext(step - 1, true)}
+      // 비전을 적었다면, 나머지 단계는 AI 제안 화면에서 이어간다
+      onAi={
+        step === 2 && savedIds[0]
+          ? () => {
+              finishOnboarding();
+              router.replace(`/suggest?level=long&parentId=${savedIds[0]}`);
+            }
+          : undefined
+      }
     />
   );
 }
@@ -218,8 +227,9 @@ function QuestionStep(props: {
   onBack: () => void;
   onNext: () => void;
   onSkip: () => void;
+  onAi?: () => void;
 }) {
-  const { index, q, value, onChange, onBack, onNext, onSkip } = props;
+  const { index, q, value, onChange, onBack, onNext, onSkip, onAi } = props;
   const c = useTheme();
   return (
     <SafeAreaView style={[styles.fill, { backgroundColor: c.canvas }]}>
@@ -241,6 +251,19 @@ function QuestionStep(props: {
         </View>
 
         <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
+          {onAi && (
+            <Pressable
+              onPress={onAi}
+              style={({ pressed }) => [styles.aiCard, { backgroundColor: c.surface }, pressScale(pressed)]}>
+              <Lightbulb size={22} color={c.accent} />
+              <View style={styles.aiText}>
+                <AppText variant="bodyStrong">나머지는 AI에게 제안받기</AppText>
+                <AppText variant="caption">적어둔 비전으로 장기 목표와 이번 주 계획을 제안해 드려요.</AppText>
+              </View>
+              <CaretRight size={14} color={c.textFaint} weight="bold" />
+            </Pressable>
+          )}
+
           <View style={styles.qHead}>
             <AppText variant="captionStrong" tone="textFaint">
               {index + 1} / 3 · {q.step}
@@ -320,6 +343,8 @@ const styles = StyleSheet.create({
   segment: { flex: 1, height: 3, borderRadius: 2 },
   skip: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 },
   qHead: { gap: Space.xs },
+  aiCard: { flexDirection: 'row', alignItems: 'center', gap: Space.sm, padding: Space.md, borderRadius: Radius.card },
+  aiText: { flex: 1, minWidth: 0, gap: 2 },
   examples: { gap: Space.xs },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Space.xs },
 });

@@ -6,7 +6,7 @@ import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
 import { Card, Tile } from '@/components/card';
 import { EmptyState } from '@/components/empty-state';
-import { CaretDown, CaretRight, Check, Compass, Plus } from '@/components/icons';
+import { CaretDown, CaretRight, Check, Compass, Lightbulb, Plus, type Icon } from '@/components/icons';
 import { ProgressBar } from '@/components/progress-bar';
 import { Screen } from '@/components/screen';
 import { Space } from '@/constants/theme';
@@ -18,6 +18,7 @@ import { tap } from '@/lib/feedback';
 const openGoal = (id: string) => router.push(`/goal/${id}`);
 const newGoal = (level: GoalLevel, parentId?: string) =>
   router.push(`/goal/new?level=${level}${parentId ? `&parentId=${parentId}` : ''}`);
+const askAi = (level: 'long' | 'short', parentId: string) => router.push(`/suggest?level=${level}&parentId=${parentId}`);
 
 export default function GoalsScreen() {
   const { data } = useStore();
@@ -109,7 +110,10 @@ function VisionGroup({ vision, goals }: { vision: Goal; goals: Goal[] }) {
         {longs.map((l, i) => (
           <LongBlock key={l.id} goal={l} goals={goals} first={i === 0} />
         ))}
-        <AddLink label="장기 목표 더하기" onPress={() => newGoal('long', vision.id)} />
+        <View style={styles.addRow}>
+          <AddLink label="장기 목표 더하기" onPress={() => newGoal('long', vision.id)} />
+          <AddLink icon={Lightbulb} label="AI 제안" onPress={() => askAi('long', vision.id)} />
+        </View>
       </Card>
     </View>
   );
@@ -149,7 +153,10 @@ function LongBlock({ goal, goals, first }: { goal: Goal; goals: Goal[]; first: b
           {shorts.map((s) => (
             <ShortRow key={s.id} goal={s} />
           ))}
-          <AddLink label="이번 주 계획 더하기" onPress={() => newGoal('short', goal.id)} />
+          <View style={styles.addRow}>
+            <AddLink label="이번 주 계획 더하기" onPress={() => newGoal('short', goal.id)} />
+            <AddLink icon={Lightbulb} label="AI 제안" onPress={() => askAi('short', goal.id)} />
+          </View>
         </View>
       )}
     </View>
@@ -187,11 +194,11 @@ function ShortRow({ goal }: { goal: Goal }) {
   );
 }
 
-function AddLink({ label, onPress }: { label: string; onPress: () => void }) {
+function AddLink({ label, onPress, icon: IconCmp = Plus }: { label: string; onPress: () => void; icon?: Icon }) {
   const c = useTheme();
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.addLink, { opacity: pressed ? 0.6 : 1 }]}>
-      <Plus size={16} color={c.accent} weight="bold" />
+      <IconCmp size={16} color={c.accent} weight="bold" />
       <AppText variant="body" tone="accent">
         {label}
       </AppText>
@@ -222,4 +229,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addLink: { flexDirection: 'row', alignItems: 'center', gap: Space.xs, minHeight: 44 },
+  addRow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: Space.lg },
 });
