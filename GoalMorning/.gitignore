@@ -41,3 +41,9 @@ example
 # generated native folders
 /ios
 /android
+
+# logs, secrets, stageshow recordings
+*.log
+.env
+.env.*
+shots/
