@@ -43,6 +43,18 @@ cd app && npm run typecheck && npm test
 cd server && npm run typecheck && npm test
 ```
 
+## 안드로이드 테스트 APK
+
+토스 앱 없이 폰에서 써 보기 위한 빌드입니다. 분석 서버 대신 **본인 Claude API 키**로 폰에서 바로 Claude를 부릅니다. 키는 앱의 `테스트 설정`에서 넣고, 그 폰에만 저장됩니다. 토스 출시용 빌드(`npm run build`)에는 이 기능이 들어가지 않습니다.
+
+필요한 것: JDK 21, Android SDK(platform 36, build-tools 35), `app/android/local.properties`에 `sdk.dir=<SDK 경로>`.
+
+```bash
+cd app && npm run apk
+```
+
+결과물은 `app/android/app/build/outputs/apk/debug/app-debug.apk`입니다. 디버그 서명이라 설치할 때 '출처를 알 수 없는 앱' 허용이 필요합니다.
+
 ## 토스에 올리기
 
 1. 앱인토스 콘솔에서 미니앱을 등록합니다. 앱 이름이 `app/apps-in-toss.config.ts`의 `appName`(`bubucounsel`)과 같아야 합니다.

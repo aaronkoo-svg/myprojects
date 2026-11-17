@@ -144,3 +144,12 @@ describe('normalize', () => {
     expect(normalize({ ...sample, shareA: -5, shareB: 80 })).toMatchObject({ shareA: 0, shareB: 100 });
   });
 });
+
+describe('JSON 스키마', () => {
+  it('앱용 JSON 스키마가 서버 zod 스키마와 같은 필드를 가진다', async () => {
+    const { ANALYSIS_JSON_SCHEMA } = await import('../../shared/jsonSchema');
+    const { analysisSchema } = await import('../src/schema');
+    expect([...ANALYSIS_JSON_SCHEMA.required].sort()).toEqual(Object.keys(analysisSchema.shape).sort());
+    expect(analysisSchema.safeParse(sample).success).toBe(true);
+  });
+});

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AiBadge, Button, TabBar } from '../components/ui';
+import { DIRECT_MODE, getDirectSettings } from '../lib/directSettings';
 import { useHistory } from '../lib/history';
 import { setDraft } from '../lib/job';
 import { formatDate, personalize, TOPIC_LABEL } from '../lib/labels';
@@ -68,6 +69,15 @@ export function Home() {
           예시로 먼저 보기
         </Link>
       </div>
+
+      {DIRECT_MODE && (
+        <Link to="/settings" className="card test-banner">
+          <span className="body-strong">테스트 버전</span>
+          <span className="caption muted">
+            {getDirectSettings().apiKey ? '내 API 키로 분석해요 · 설정 바꾸기' : 'API 키를 넣어야 분석할 수 있어요 · 설정하기'}
+          </span>
+        </Link>
+      )}
 
       <ul className="notice-list">
         <li>

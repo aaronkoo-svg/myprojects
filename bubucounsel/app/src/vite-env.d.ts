@@ -6,3 +6,7 @@ interface ImportMetaEnv {
 interface Window {
   ReactNativeWebView?: unknown;
 }
+interface ImportMetaEnv {
+  /** 1이면 테스트 APK용 직접 분석 모드 */
+  readonly VITE_DIRECT_MODE?: string;
+}

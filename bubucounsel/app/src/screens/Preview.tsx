@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LIMITS } from '../../../shared/analysis';
 import { BottomBar, Button } from '../components/ui';
 import { apiConfigured } from '../lib/api';
+import { DIRECT_MODE, getDirectSettings } from '../lib/directSettings';
 import { setDraft, startAnalysis, useDraft } from '../lib/job';
 import { MAX_PHOTOS, pickPhotos } from '../lib/toss';
 
@@ -36,7 +37,11 @@ export function Preview() {
   };
 
   const submit = () => {
-    if (!apiConfigured) {
+    if (DIRECT_MODE && !getDirectSettings().apiKey) {
+      navigate('/settings?resume=1');
+      return;
+    }
+    if (!DIRECT_MODE && !apiConfigured) {
       setMessage('분석 서버가 아직 연결되지 않았어요. 지금은 예시로만 볼 수 있어요.');
       return;
     }

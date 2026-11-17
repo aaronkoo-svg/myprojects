@@ -119,7 +119,7 @@ a {
   max-width: 560px;
   margin: 0 auto;
   min-height: 100dvh;
-  padding: 24px var(--gutter) calc(32px + var(--safe-bottom));
+  padding: calc(24px + var(--safe-top)) var(--gutter) calc(32px + var(--safe-bottom));
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -487,7 +487,7 @@ a {
   z-index: 30;
   background: rgba(255, 255, 255, 0.96);
   overflow: auto;
-  padding: 16px;
+  padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
   display: block;
   width: 100%;
 }
@@ -810,4 +810,51 @@ a {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ── 테스트 설정 (테스트 APK 전용) ───────────────────── */
+.test-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 18px;
+  background: var(--tone-care-bg);
+}
+.key-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+}
+.notice-inline {
+  color: var(--tone-care-ink);
+}
+.model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.model {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 64px;
+  padding: 14px 18px;
+  border-radius: var(--r-card);
+  background: var(--canvas-parchment);
+  text-align: left;
+  box-shadow: inset 0 0 0 2px transparent;
+  transition: box-shadow 0.2s var(--ease);
+}
+.model.selected {
+  background: var(--canvas);
+  box-shadow: inset 0 0 0 2px var(--primary);
 }

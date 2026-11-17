@@ -105,7 +105,25 @@ export async function copyText(text: string): Promise<boolean> {
     else await navigator.clipboard.writeText(text);
     return true;
   } catch {
+    return inToss ? false : legacyCopy(text);
+  }
+}
+
+/** 일부 안드로이드 WebView는 Clipboard API를 막는다. 옛 방식으로 한 번 더 시도한다. */
+function legacyCopy(text: string): boolean {
+  const area = document.createElement('textarea');
+  area.value = text;
+  area.setAttribute('readonly', '');
+  area.style.position = 'fixed';
+  area.style.opacity = '0';
+  document.body.appendChild(area);
+  area.select();
+  try {
+    return document.execCommand('copy');
+  } catch {
     return false;
+  } finally {
+    area.remove();
   }
 }
 

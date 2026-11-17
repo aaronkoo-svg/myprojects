@@ -33,5 +33,7 @@
   --shadow-float: 0 4px 24px rgba(0, 0, 0, 0.08);
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
 
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* 안드로이드 테스트 APK(Capacitor)는 --safe-area-inset-*을 넣어 준다. 토스 앱에서는 env() 값을 쓴다. */
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
 }

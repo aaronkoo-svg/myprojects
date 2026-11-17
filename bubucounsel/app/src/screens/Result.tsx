@@ -402,6 +402,8 @@ const ERROR_COPY: Record<Extract<Job, { status: 'error' }>['code'], { title: str
   image_failed: { title: '캡처를 읽지 못했어요', body: '이미지 파일에 문제가 있어요. 다른 캡처로 다시 올려 주세요.' },
   unauthorized: { title: '토스 앱에서 열어 주세요', body: '사용자 확인에 실패했어요. 토스 앱을 최신 버전으로 업데이트한 뒤 다시 시도해 주세요.' },
   bad_request: { title: '캡처가 너무 크거나 많아요', body: '캡처 수를 줄여서 다시 올려 주세요.' },
+  no_key: { title: 'API 키를 먼저 넣어 주세요', body: '테스트 설정에서 Claude API 키를 넣으면 분석할 수 있어요.' },
+  bad_key: { title: 'API 키를 확인해 주세요', body: '키가 틀렸거나 사용할 수 없는 키예요. 테스트 설정에서 다시 넣어 주세요.' },
 };
 
 function ErrorView({ job }: { job: Extract<Job, { status: 'error' }> }) {
@@ -410,6 +412,7 @@ function ErrorView({ job }: { job: Extract<Job, { status: 'error' }> }) {
   const [adFailed, setAdFailed] = useState(false);
   const canWatchAd = job.code === 'limit_free_used' && adAvailable() && isAdReady();
   const canRetry = job.code === 'ai_failed' || job.code === 'unauthorized';
+  const needsKey = job.code === 'no_key' || job.code === 'bad_key';
 
   const watchAd = async () => {
     setAdFailed(false);
@@ -436,7 +439,8 @@ function ErrorView({ job }: { job: Extract<Job, { status: 'error' }> }) {
       <BottomBar>
         {canWatchAd && <Button onClick={watchAd}>광고 보고 한 번 더 분석하기</Button>}
         {canRetry && <Button onClick={() => void startAnalysis()}>다시 시도하기</Button>}
-        <Button variant={canWatchAd || canRetry ? 'text' : 'primary'} onClick={goHome}>
+        {needsKey && <Button onClick={() => navigate('/settings?resume=1', { replace: true })}>테스트 설정 열기</Button>}
+        <Button variant={canWatchAd || canRetry || needsKey ? 'text' : 'primary'} onClick={goHome}>
           홈으로 가기
         </Button>
       </BottomBar>

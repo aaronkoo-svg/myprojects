@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { parse as parsePartial } from 'partial-json';
 import type { Analysis, PartialAnalysis, UploadImage } from '../../shared/analysis';
-import { SYSTEM_PROMPT, userText } from './prompt';
+import { SYSTEM_PROMPT, userText } from '../../shared/prompt';
 import { analysisSchema, normalize } from './schema';
 
 export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
