@@ -1,0 +1,14 @@
+# 공통
+.DS_Store
+*.log
+.env
+.env.*
+
+# Node
+node_modules/
+dist/
+build/
+
+# Python
+__pycache__/
+.venv/
