@@ -5,10 +5,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import { App } from './App';
+import { DIRECT_MODE } from './lib/directSettings';
 import { loadHistory } from './lib/history';
 import { preloadAd } from './lib/toss';
 
 void loadHistory();
+if (DIRECT_MODE) void import('./lib/native').then((m) => m.setupNative());
 preloadAd();
 
 createRoot(document.getElementById('root')!).render(

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LIMITS } from '../../../shared/analysis';
 import { BottomBar, Button } from '../components/ui';
 import { apiConfigured } from '../lib/api';
+import { pushBackHandler } from '../lib/back';
 import { DIRECT_MODE, getDirectSettings } from '../lib/directSettings';
 import { setDraft, startAnalysis, useDraft } from '../lib/job';
 import { MAX_PHOTOS, pickPhotos } from '../lib/toss';
@@ -16,6 +17,9 @@ export function Preview() {
   useEffect(() => {
     if (draft.photos.length === 0) navigate('/', { replace: true });
   }, [draft.photos.length, navigate]);
+
+  // 크게 보기가 열려 있으면 뒤로가기는 그것만 닫는다.
+  useEffect(() => (zoomed ? pushBackHandler(() => setZoomed(null)) : undefined), [zoomed]);
 
   const update = (photos: string[]) => setDraft({ ...draft, photos });
   const remove = (index: number) => update(draft.photos.filter((_, i) => i !== index));
