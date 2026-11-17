@@ -1,4 +1,4 @@
-# NewProject 계획
+# bubucounsel 계획
 
 ## 목표
 - [ ] 이 프로젝트로 해결하려는 문제 정하기

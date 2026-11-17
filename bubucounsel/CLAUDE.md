@@ -1,4 +1,4 @@
-# NewProject
+# bubucounsel
 
 이 폴더는 `myprojects` 저장소 안의 독립된 프로젝트입니다.
 작업은 이 폴더 안에서만 하고, 다른 프로젝트(예: `GoalMorning/`)는 건드리지 않습니다.
