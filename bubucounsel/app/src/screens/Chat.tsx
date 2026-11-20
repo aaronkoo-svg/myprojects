@@ -508,8 +508,8 @@ const ERROR_COPY: Record<string, { title: string; body: string }> = {
   image_failed: { title: '캡처를 읽지 못했어요', body: '이미지 파일에 문제가 있어요. 다른 캡처로 다시 보내 주세요.' },
   unauthorized: { title: '토스 앱에서 열어 주세요', body: '사용자 확인에 실패했어요. 토스 앱을 최신 버전으로 업데이트한 뒤 다시 시도해 주세요.' },
   bad_request: { title: '캡처가 너무 크거나 많아요', body: '캡처 수를 줄여서 다시 보내 주세요.' },
-  no_key: { title: 'API 키를 먼저 넣어 주세요', body: '테스트 설정에서 Claude API 키를 넣으면 답할 수 있어요.' },
-  bad_key: { title: 'API 키를 확인해 주세요', body: '키가 틀렸거나 사용할 수 없는 키예요. 테스트 설정에서 다시 넣어 주세요.' },
+  no_key: { title: 'API 키를 먼저 넣어 주세요', body: '설정의 테스트 설정에서 Claude API 키를 넣으면 답할 수 있어요.' },
+  bad_key: { title: 'API 키를 확인해 주세요', body: '키가 틀렸거나 사용할 수 없는 키예요. 설정의 테스트 설정에서 다시 넣어 주세요.' },
 };
 const CHAT_LIMIT_COPY = { title: '오늘은 이야기를 많이 나눴어요', body: '대화는 하루 20번까지 할 수 있어요. 내일 다시 이야기해요.' };
 
@@ -535,7 +535,7 @@ function ErrorCard({ run }: { run: Extract<Run, { status: 'error' }> }) {
       <div className="error-actions">
         {canWatchAd && <Button onClick={watchAd}>광고 보고 한 번 더 분석하기</Button>}
         {canRetry && <Button onClick={() => run.retry()}>다시 시도하기</Button>}
-        {needsKey && <Button onClick={() => navigate('/settings')}>테스트 설정 열기</Button>}
+        {needsKey && <Button onClick={() => navigate('/settings')}>설정 열기</Button>}
         <Button variant="outline" onClick={dismissError}>
           닫기
         </Button>

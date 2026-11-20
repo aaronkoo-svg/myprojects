@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import { DIRECT_MODE } from './lib/directSettings';
 import { AnalysisDetail } from './screens/AnalysisDetail';
 import { Chat } from './screens/Chat';
 import { History } from './screens/History';
@@ -21,7 +20,7 @@ export function App() {
       <Route path="/chat/:id/detail/:mid" element={<AnalysisDetail />} />
       <Route path="/history" element={<History />} />
       <Route path="/practice" element={<Practice />} />
-      {DIRECT_MODE && <Route path="/settings" element={<Settings />} />}
+      <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<Home />} />
     </Routes>
   );

@@ -1,10 +1,9 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Topic } from '../../../shared/analysis';
 import { Mascot } from '../components/Mascot';
-import { Button, Icon, TabBar } from '../components/ui';
+import { Icon, TabBar } from '../components/ui';
 import { formatDate, personalize, TOPIC_LABEL } from '../lib/labels';
-import { clearThreads, latestAnalysis, threadTitle, useThreads, type Thread } from '../lib/threads';
+import { latestAnalysis, threadTitle, useThreads, type Thread } from '../lib/threads';
 
 /** 이번 달 분석한 대화에서 가장 많이 나온 주제 */
 function topTopic(threads: Thread[], now = new Date()) {
@@ -26,7 +25,6 @@ function topTopic(threads: Thread[], now = new Date()) {
 
 export function History() {
   const { threads, loaded } = useThreads();
-  const [confirming, setConfirming] = useState(false);
   const top = topTopic(threads);
 
   return (
@@ -88,33 +86,7 @@ export function History() {
               );
             })}
           </ul>
-          <p className="fine-print">대화는 이 기기에만 저장되고, 토스 앱을 지우면 함께 사라져요.</p>
-          <div className="danger-zone">
-            {confirming ? (
-              <div className="confirm">
-                <p className="caption">대화를 모두 지울까요? 되돌릴 수 없어요.</p>
-                <div className="confirm-actions">
-                  <Button variant="secondary" onClick={() => setConfirming(false)}>
-                    그대로 두기
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="danger"
-                    onClick={() => {
-                      clearThreads();
-                      setConfirming(false);
-                    }}
-                  >
-                    모두 지우기
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Button variant="text" className="subtle" onClick={() => setConfirming(true)}>
-                대화 모두 지우기
-              </Button>
-            )}
-          </div>
+          <p className="fine-print">대화는 이 기기에만 저장돼요. 지우려면 홈의 설정에서 할 수 있어요.</p>
         </section>
       )}
 

@@ -47,7 +47,7 @@ cd server && npm run typecheck && npm test
 
 ## 안드로이드 테스트 APK
 
-토스 앱 없이 폰에서 써 보기 위한 빌드입니다. 분석 서버 대신 **본인 Claude API 키**로 폰에서 바로 Claude를 부릅니다. 키는 앱의 `테스트 설정`에서 넣고, 그 폰에만 저장됩니다. 토스 출시용 빌드(`npm run build`)에는 이 기능이 들어가지 않습니다.
+토스 앱 없이 폰에서 써 보기 위한 빌드입니다. 분석 서버 대신 **본인 Claude API 키**로 폰에서 바로 Claude를 부릅니다. 키는 홈 오른쪽 위 톱니바퀴(설정) › `테스트 설정`에서 넣고, 그 폰에만 저장됩니다. 토스 출시용 빌드(`npm run build`)에는 이 기능이 들어가지 않습니다.
 
 필요한 것: JDK 21, Android SDK(platform 36, build-tools 35), `app/android/local.properties`에 `sdk.dir=<SDK 경로>`.
 

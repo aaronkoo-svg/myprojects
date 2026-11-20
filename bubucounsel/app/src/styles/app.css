@@ -124,11 +124,6 @@ a { color: inherit; text-decoration: none; }
 .tint-orange { color: #c25a12; }
 .tint-green { color: #23843f; }
 
-.test-banner {
-  display: flex; flex-direction: column; gap: 2px;
-  padding: 14px 18px; border-radius: var(--r-card);
-  background: var(--tone-care-bg); color: var(--tone-care-ink);
-}
 
 .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .day {
@@ -443,3 +438,33 @@ button.practice-card:active { transform: scale(0.98); }
   padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
 }
 .lightbox img { width: 100%; max-width: 520px; border-radius: 14px; }
+
+/* ── 설정 ─────────────────────────────────────────────── */
+.home .top-actions { display: flex; justify-content: flex-end; margin: -6px -6px -14px; }
+.settings-btn { color: var(--ink-60); }
+.settings { gap: 24px; }
+.group { display: flex; flex-direction: column; gap: 8px; }
+.group-title { margin: 0 4px; font-size: 14px; font-weight: 700; color: var(--ink-60); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.group-card { margin: 0; padding: 6px 18px; border-radius: var(--r-card); background: var(--surface); display: flex; flex-direction: column; }
+.row { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.row + .row-note, .row-note + .row { border-top: 0; }
+.row-label { font-size: 16px; font-weight: 600; }
+.row-value { font-size: 16px; color: var(--ink-60); }
+.row-note { font-size: 13px; line-height: 1.5; color: var(--ink-60); padding-bottom: 10px; border-bottom: 1px solid var(--hairline); }
+.row-button { min-height: 52px; width: 100%; text-align: left; font-size: 16px; font-weight: 600; }
+.row-button.danger { color: var(--tone-hurt-ink); }
+.row-button:disabled { opacity: 0.4; }
+.confirm-row { width: 100%; padding: 10px 0; display: flex; flex-direction: column; gap: 10px; }
+.group-card.about, .group-card.help { padding: 14px 18px; gap: 12px; }
+.group-card.about li { font-size: 15px; line-height: 1.5; padding-left: 12px; position: relative; }
+.group-card.about li::before { content: ''; position: absolute; left: 0; top: 0.62em; width: 4px; height: 4px; border-radius: 50%; background: var(--ink-48); }
+.group-card.help li { display: flex; flex-direction: column; gap: 1px; }
+.group-card.help strong { font-size: 16px; }
+.group-card.test { padding: 16px 18px; gap: 10px; }
+.group-card.test .textarea { background: var(--canvas); }
+.group-card.test .model { background: var(--canvas); }
+.group-card.test .model.selected { box-shadow: inset 0 0 0 2px var(--primary); }
+.group-card.test .row-note { border-bottom: 0; padding-bottom: 4px; }
+.test-tag { height: 22px; padding: 0 8px; border-radius: var(--r-pill); background: var(--tone-care-bg); color: var(--tone-care-ink); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; }
+.test-actions { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 4px; }
+.input::placeholder { font-family: var(--font); letter-spacing: -0.01em; }

@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Composer, type ComposerInput } from '../components/Composer';
 import { Mascot } from '../components/Mascot';
 import { Icon, TabBar } from '../components/ui';
-import { DIRECT_MODE, getDirectSettings } from '../lib/directSettings';
 import { formatDate, personalize, TOPIC_LABEL } from '../lib/labels';
 import { sendCaptures, sendText } from '../lib/run';
 import { createThread, latestAnalysis, newId, resetSample, SAMPLE_ID, threadTitle, useThreads, type Thread } from '../lib/threads';
@@ -49,6 +48,11 @@ export function Home() {
 
   return (
     <main className="screen with-tabbar home">
+      <div className="top-actions">
+        <Link to="/settings" className="icon-btn settings-btn" aria-label="설정">
+          <Icon.gear />
+        </Link>
+      </div>
       <section className="hero-card">
         <Mascot size={176} label="말풍선 모양의 캐릭터 투닥이" className="hero-mascot" />
         <h1 className="title-1 center">오늘은 어떤 대화였어요?</h1>
@@ -76,13 +80,6 @@ export function Home() {
           <span className="tint-green"><Icon.sample size={18} /></span>예시 보기
         </Link>
       </div>
-
-      {DIRECT_MODE && (
-        <Link to="/settings" className="test-banner">
-          <span className="body-strong">테스트 버전</span>
-          <span className="caption">{getDirectSettings().apiKey ? '내 API 키로 답해요 · 설정 바꾸기' : 'API 키를 넣어야 답할 수 있어요 · 설정하기'}</span>
-        </Link>
-      )}
 
       <section className="section">
         <div className="section-head">
