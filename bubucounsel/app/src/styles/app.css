@@ -419,3 +419,27 @@ button.practice-card:active { transform: scale(0.98); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ── 분석 자세히 보기 ─────────────────────────────────── */
+.detail-link {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-height: 56px; margin: 2px -4px -4px; padding: 10px 12px; border-radius: 16px;
+  background: var(--primary-soft); color: var(--primary);
+}
+.detail-link > span { display: flex; flex-direction: column; gap: 1px; }
+.detail-link strong { font-size: 15px; font-weight: 700; }
+.detail-link .caption { color: var(--ink-60); font-size: 12px; }
+.detail .card-soft { gap: 10px; }
+.detail .card-soft svg { vertical-align: -3px; }
+.sample-chat.wide { width: 100%; }
+.detail-thumbs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.detail-thumbs::-webkit-scrollbar { display: none; }
+.detail-thumbs button { flex: none; }
+.detail-thumbs img { width: 96px; height: 160px; object-fit: cover; object-position: top; border-radius: 14px; display: block; }
+.detail-foot { align-items: flex-start; gap: 8px; }
+.lightbox {
+  position: fixed; inset: 0; z-index: 30; width: 100%; display: block; overflow: auto;
+  background: rgba(255, 255, 255, 0.97);
+  padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
+}
+.lightbox img { width: 100%; max-width: 520px; border-radius: 14px; }

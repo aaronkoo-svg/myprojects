@@ -140,7 +140,7 @@ function AgentGroup({ children }: { children: ReactNode }) {
   );
 }
 
-function UserMessage({ message, isSample }: { message: Message; isSample: boolean }) {
+export function UserMessage({ message, isSample }: { message: Message; isSample: boolean }) {
   if (message.role !== 'user') return null;
   if (message.kind === 'text') {
     return <p className="bubble-user">{message.text}</p>;
@@ -175,10 +175,9 @@ function UserMessage({ message, isSample }: { message: Message; isSample: boolea
 
 function AgentMessage({ message, thread, isSample }: { message: Message; thread: Thread; isSample: boolean }) {
   if (message.role !== 'agent') return null;
-  const say = (text: string) => personalize(text, thread.meIsA);
   switch (message.kind) {
     case 'analysis':
-      return <AnalysisView analysis={message.analysis} thread={thread} isSample={isSample} />;
+      return <AnalysisView analysis={message.analysis} thread={thread} isSample={isSample} messageId={message.id} />;
     case 'reply':
       return (
         <>
@@ -191,44 +190,69 @@ function AgentMessage({ message, thread, isSample }: { message: Message; thread:
     case 'why': {
       const target = thread.messages.find((m) => m.id === message.analysisId);
       if (target?.kind !== 'analysis') return null;
-      const me: Speaker = thread.meIsA ? 'A' : 'B';
       return (
         <div className="card-agent">
           <p className="card-title">다툼의 흐름을 바꾼 말이에요</p>
-          <ul className="utterances">
-            {target.analysis.utterances.map((u, i) => (
-              <li key={i} className={`utterance ${u.speaker === me ? 'mine' : 'theirs'}`}>
-                <span className="caption muted">{u.speaker === me ? '나' : '상대'}</span>
-                <p className={`quote tone-${u.tone}`}>{u.quote}</p>
-                <span className={`tone-label tone-${u.tone}`}>{TONE_LABEL[u.tone]}</span>
-                <p className="caption note">{say(u.note)}</p>
-              </li>
-            ))}
-          </ul>
+          <WhyList analysis={target.analysis} meIsA={thread.meIsA} />
         </div>
       );
     }
     case 'guide': {
       const target = thread.messages.find((m) => m.id === message.analysisId);
       if (target?.kind !== 'analysis') return null;
-      const steps = thread.meIsA ? target.analysis.guideForA : target.analysis.guideForB;
       return (
         <div className="card-agent">
           <p className="card-title">다음엔 이렇게 해 보세요</p>
-          <ol className="guide">
-            {steps.map((step, i) => (
-              <li key={i}>{say(step)}</li>
-            ))}
-          </ol>
+          <GuideList analysis={target.analysis} meIsA={thread.meIsA} />
         </div>
       );
     }
   }
 }
 
+/** 다툼의 흐름을 바꾼 말들 (원문 인용 + 어떻게 들렸을지) */
+export function WhyList({ analysis, meIsA }: { analysis: Analysis; meIsA: boolean }) {
+  const me: Speaker = meIsA ? 'A' : 'B';
+  return (
+    <ul className="utterances">
+      {analysis.utterances.map((u, i) => (
+        <li key={i} className={`utterance ${u.speaker === me ? 'mine' : 'theirs'}`}>
+          <span className="caption muted">{u.speaker === me ? '나' : '상대'}</span>
+          <p className={`quote tone-${u.tone}`}>{u.quote}</p>
+          <span className={`tone-label tone-${u.tone}`}>{TONE_LABEL[u.tone]}</span>
+          <p className="caption note">{personalize(u.note, meIsA)}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function GuideList({ analysis, meIsA }: { analysis: Analysis; meIsA: boolean }) {
+  const steps = meIsA ? analysis.guideForA : analysis.guideForB;
+  return (
+    <ol className="guide">
+      {steps.map((step, i) => (
+        <li key={i}>{personalize(step, meIsA)}</li>
+      ))}
+    </ol>
+  );
+}
+
 /* ── 분석 결과 ────────────────────────────────────────── */
 
-function AnalysisView({ analysis, thread, isSample, streaming = false }: { analysis: PartialAnalysis; thread: Thread; isSample: boolean; streaming?: boolean }) {
+function AnalysisView({
+  analysis,
+  thread,
+  isSample,
+  streaming = false,
+  messageId,
+}: {
+  analysis: PartialAnalysis;
+  thread: Thread;
+  isSample: boolean;
+  streaming?: boolean;
+  messageId?: string;
+}) {
   const say = (text: string) => personalize(text, thread.meIsA);
   if (analysis.kind === 'not_chat') {
     return (
@@ -269,7 +293,15 @@ function AnalysisView({ analysis, thread, isSample, streaming = false }: { analy
           </div>
         )}
         {analysis.reason ? <p className="verdict-reason">{say(analysis.reason)}</p> : streaming && <Skeleton lines={2} />}
-        {!streaming && !isSample && <Feedback swapped={!thread.meIsA} />}
+        {!streaming && messageId && (
+          <Link to={`/chat/${thread.id}/detail/${messageId}`} className="detail-link">
+            <span>
+              <strong>자세히 보기</strong>
+              <span className="caption muted">보낸 대화 · 짚어 볼 말 · 다음엔 이렇게</span>
+            </span>
+            <Icon.chevron size={18} />
+          </Link>
+        )}
       </div>
 
       {suggestions.length > 0 ? (
@@ -342,11 +374,11 @@ function SuggestionTabs({
 }
 
 /** 채팅 답에 붙는 보낼 문장 */
-function SuggestionBlock({ text }: { text: string }) {
+export function SuggestionBlock({ text, label = '이렇게 보내 보세요' }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="suggestion">
-      <span className="card-title">이렇게 보내 보세요</span>
+      <span className="card-title">{label}</span>
       <p className="suggestion-text">{text}</p>
       <div className="suggestion-actions">
         <Button
@@ -364,7 +396,7 @@ function SuggestionBlock({ text }: { text: string }) {
   );
 }
 
-function Feedback({ swapped }: { swapped: boolean }) {
+export function Feedback({ swapped }: { swapped: boolean }) {
   const [state, setState] = useState<'closed' | 'open' | 'sent'>('closed');
   const reasons: { id: FeedbackReason; label: string }[] = [
     { id: 'biased', label: '한쪽으로 치우쳤어요' },
@@ -403,7 +435,7 @@ function Feedback({ swapped }: { swapped: boolean }) {
 }
 
 /** 폭력·협박·자해 신호가 보이면 판정 대신 보여 준다. */
-function SafetyCard({ message }: { message: string }) {
+export function SafetyCard({ message }: { message: string }) {
   return (
     <div className="card-agent safety">
       <AiBadge />
