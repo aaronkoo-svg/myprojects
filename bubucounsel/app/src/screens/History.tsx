@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Topic } from '../../../shared/analysis';
+import { AppBar } from '../components/AppBar';
 import { Mascot } from '../components/Mascot';
 import { Icon, TabBar } from '../components/ui';
 import { formatDate, personalize, TOPIC_LABEL } from '../lib/labels';
@@ -29,6 +30,7 @@ export function History() {
 
   return (
     <main className="screen with-tabbar">
+      <AppBar settings />
       <h1 className="title-1 page-title">우리 대화 돌아보기</h1>
 
       {top && (

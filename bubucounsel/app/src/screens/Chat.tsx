@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Analysis, PartialAnalysis, Speaker } from '../../../shared/analysis';
 import type { ChatReply } from '../../../shared/chat';
 import { SAMPLE_CHAT } from '../../../shared/sample';
+import { AppBar } from '../components/AppBar';
 import { Composer, type ComposerInput } from '../components/Composer';
 import { Mascot } from '../components/Mascot';
 import { AiBadge, Button, Icon, Skeleton } from '../components/ui';
@@ -57,6 +58,7 @@ export function Chat() {
 
   return (
     <main className="chat">
+      <AppBar back />
       <div className="chat-scroll" ref={scroller}>
         <div className="chat-inner">
           <div className="chat-head">

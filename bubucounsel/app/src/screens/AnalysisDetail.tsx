@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { SAMPLE_CHAT } from '../../../shared/sample';
+import { AppBar } from '../components/AppBar';
 import { Mascot } from '../components/Mascot';
 import { AiBadge, BottomBar, Button, Icon } from '../components/ui';
 import { pushBackHandler } from '../lib/back';
@@ -55,6 +56,7 @@ export function AnalysisDetail() {
 
   return (
     <main className="screen with-bottom-bar detail">
+      <AppBar back />
       <header className="page-head">
         <span className="caption muted">{isSample ? '예시 대화' : `${formatDate(message.at)} 분석`}</span>
         <h1 className="title-1">분석 자세히 보기</h1>

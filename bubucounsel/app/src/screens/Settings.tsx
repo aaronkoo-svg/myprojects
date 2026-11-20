@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AppBar } from '../components/AppBar';
 import { Button } from '../components/ui';
 import { DIRECT_MODE, DIRECT_MODELS, getDirectSettings, saveDirectSettings } from '../lib/directSettings';
 import { dismissError, useRun } from '../lib/run';
@@ -11,6 +12,7 @@ export function Settings() {
 
   return (
     <main className="screen settings">
+      <AppBar back />
       <h1 className="title-1 page-title">설정</h1>
 
       <section className="group" aria-labelledby="g-history">

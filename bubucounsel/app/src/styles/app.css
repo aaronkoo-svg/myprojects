@@ -440,8 +440,6 @@ button.practice-card:active { transform: scale(0.98); }
 .lightbox img { width: 100%; max-width: 520px; border-radius: 14px; }
 
 /* ── 설정 ─────────────────────────────────────────────── */
-.home .top-actions { display: flex; justify-content: flex-end; margin: -6px -6px -14px; }
-.settings-btn { color: var(--ink-60); }
 .settings { gap: 24px; }
 .group { display: flex; flex-direction: column; gap: 8px; }
 .group-title { margin: 0 4px; font-size: 14px; font-weight: 700; color: var(--ink-60); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -468,3 +466,21 @@ button.practice-card:active { transform: scale(0.98); }
 .test-tag { height: 22px; padding: 0 8px; border-radius: var(--r-pill); background: var(--tone-care-bg); color: var(--tone-care-ink); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; }
 .test-actions { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 4px; }
 .input::placeholder { font-family: var(--font); letter-spacing: -0.01em; }
+
+/* ── 앱 바 (토스 앱 밖에서만 아이콘·이름) ─────────────── */
+.app-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-height: 48px; margin: -6px -6px -8px;
+}
+.app-bar.toss { justify-content: flex-end; margin-bottom: -14px; }
+.app-bar-brand { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.app-bar-home { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px; }
+.app-bar-home img { width: 30px; height: 30px; border-radius: 9px; display: block; box-shadow: 0 0 0 1px rgba(30, 60, 120, 0.08); }
+.app-bar-home span { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+.app-bar-back { color: var(--ink); margin-right: -4px; }
+.app-bar-action { color: var(--ink-60); }
+.chat > .app-bar {
+  flex: none; margin: 0; padding: calc(4px + var(--safe-top)) 10px 4px 4px;
+  background: rgba(255, 255, 255, 0.92); box-shadow: 0 1px 0 var(--divider-soft);
+}
+.chat > .app-bar + .chat-scroll .chat-inner { padding-top: 8px; }

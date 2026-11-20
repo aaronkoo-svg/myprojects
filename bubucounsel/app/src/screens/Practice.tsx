@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { AppBar } from '../components/AppBar';
 import { Mascot } from '../components/Mascot';
 import { TabBar } from '../components/ui';
 import { startRefine } from './Home';
@@ -7,6 +8,7 @@ export function Practice() {
   const navigate = useNavigate();
   return (
     <main className="screen with-tabbar">
+      <AppBar settings />
       <header className="page-head">
         <h1 className="title-1">연습해 보기</h1>
         <p className="body muted">다음 대화는 조금 더 편하게 할 수 있게, 미리 연습해요.</p>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AppBar } from '../components/AppBar';
 import { Composer, type ComposerInput } from '../components/Composer';
 import { Mascot } from '../components/Mascot';
 import { Icon, TabBar } from '../components/ui';
@@ -48,11 +49,7 @@ export function Home() {
 
   return (
     <main className="screen with-tabbar home">
-      <div className="top-actions">
-        <Link to="/settings" className="icon-btn settings-btn" aria-label="설정">
-          <Icon.gear />
-        </Link>
-      </div>
+      <AppBar settings />
       <section className="hero-card">
         <Mascot size={176} label="말풍선 모양의 캐릭터 투닥이" className="hero-mascot" />
         <h1 className="title-1 center">오늘은 어떤 대화였어요?</h1>
