@@ -1,9 +1,11 @@
-# bubucounsel
+# bubucounsel — 투닥
 
 부부·연인의 메신저 다툼 캡처를 올리면 AI가 대화를 읽고, 어디서 엇갈렸는지와 지금 뭐라고 보내면 좋을지 알려 주는 토스 미니앱입니다.
 
 - 계획: [`PLAN.md`](./PLAN.md)
 - 디자인 규칙: [`DESIGN.md`](./DESIGN.md)
+
+앱 이름은 **투닥**, 캐릭터 이름은 **투닥이**입니다. 아이콘과 토스 콘솔용 로고(600×600)는 `app/scripts/make-icons.cjs`로 만들고, 로고는 `docs/brand/logo-600.png`에 있습니다.
 
 ## 구성
 

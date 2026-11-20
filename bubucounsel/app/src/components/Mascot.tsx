@@ -1,8 +1,8 @@
 import { useId } from 'react';
 
 /**
- * 토닥이와 친구들. 보송한 펠트 질감의 캐릭터를 SVG로 그린다.
- * blue(토닥이·말풍선), purple(동그라미), orange(네모), green(콩)
+ * 투닥이와 친구들. 보송한 펠트 질감의 캐릭터를 SVG로 그린다.
+ * blue(투닥이·말풍선), purple(동그라미), orange(네모), green(콩)
  */
 export type MascotVariant = 'blue' | 'purple' | 'orange' | 'green';
 

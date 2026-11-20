@@ -114,7 +114,7 @@ export function Chat() {
 
 type Group = { role: 'user' | 'agent'; messages: Message[] };
 
-/** 이어지는 토닥이의 말은 한 묶음으로 보여 준다. */
+/** 이어지는 투닥이의 말은 한 묶음으로 보여 준다. */
 function groupMessages(messages: Message[]): Group[] {
   const groups: Group[] = [];
   for (const m of messages) {
@@ -131,7 +131,7 @@ function AgentGroup({ children }: { children: ReactNode }) {
       <Mascot size={36} plain className="agent-avatar" />
       <div className="agent-body">
         <div className="agent-name">
-          <span>토닥이</span>
+          <span>투닥이</span>
           <span className="ai-tag">AI</span>
         </div>
         {children}

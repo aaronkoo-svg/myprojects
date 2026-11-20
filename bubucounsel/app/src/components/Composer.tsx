@@ -102,7 +102,7 @@ export function Composer({ variant, placeholder, onSubmit, busy = false, autoFoc
           {variant === 'hero' ? <Icon.photo /> : <Icon.plus />}
         </button>
         <label className="sr-only" htmlFor={`composer-${variant}`}>
-          토닥이에게 보낼 말
+          투닥이에게 보낼 말
         </label>
         <textarea
           id={`composer-${variant}`}

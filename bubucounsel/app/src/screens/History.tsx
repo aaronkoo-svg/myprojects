@@ -59,7 +59,7 @@ export function History() {
         <div className="empty">
           <Mascot variant="purple" size={110} />
           <p className="body-strong">아직 나눈 대화가 없어요</p>
-          <p className="caption muted">토닥이와 대화하면 여기에 쌓여요. 이 기기에만 저장돼요.</p>
+          <p className="caption muted">투닥이와 대화하면 여기에 쌓여요. 이 기기에만 저장돼요.</p>
           <Link to="/" className="btn btn-secondary">
             대화 시작하기
           </Link>

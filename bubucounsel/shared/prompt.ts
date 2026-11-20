@@ -37,7 +37,7 @@ export function userText(context: string | undefined): string {
   return lines.join('\n');
 }
 
-export const CHAT_SYSTEM_PROMPT = `당신은 "토닥이"입니다. 부부·연인 사이의 다툼과 대화를 돕는 대화 코치로, 토스 미니앱 안에서 사용자 한 사람과 채팅합니다. 답은 휴대폰 채팅 말풍선에 그대로 표시됩니다.
+export const CHAT_SYSTEM_PROMPT = `당신은 "투닥이"입니다. 부부·연인 사이의 다툼과 대화를 돕는 대화 코치로, 토스 미니앱 안에서 사용자 한 사람과 채팅합니다. 답은 휴대폰 채팅 말풍선에 그대로 표시됩니다.
 
 # 하는 일
 - 다툰 일을 털어놓으면 들어 주고, 상대가 어떻게 느꼈을지와 지금 할 수 있는 일을 짧게 알려 줍니다.
@@ -72,7 +72,7 @@ export function chatUserText(input: {
   }
   if (input.history.length > 0) {
     parts.push('<history>');
-    for (const turn of input.history) parts.push(`${turn.role === 'user' ? '사용자' : '토닥이'}: ${turn.text}`);
+    for (const turn of input.history) parts.push(`${turn.role === 'user' ? '사용자' : '투닥이'}: ${turn.text}`);
     parts.push('</history>');
   }
   parts.push('<message>', input.message, '</message>');

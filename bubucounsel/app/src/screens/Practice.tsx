@@ -45,7 +45,7 @@ export function Practice() {
       <section className="card-soft">
         <p className="body-strong">실전 연습은 이렇게 열릴 거예요</p>
         <p className="caption muted">
-          분석한 대화를 무대로 토닥이가 상대 역할을 맡아요. 그때 했던 말 대신 다른 말을 골라 보고, 대화가 어떻게 달라지는지 확인할 수 있어요.
+          분석한 대화를 무대로 투닥이가 상대 역할을 맡아요. 그때 했던 말 대신 다른 말을 골라 보고, 대화가 어떻게 달라지는지 확인할 수 있어요.
         </p>
       </section>
 

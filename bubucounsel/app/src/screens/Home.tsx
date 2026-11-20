@@ -24,7 +24,7 @@ function thisWeek(now = new Date()) {
 
 export const REFINE_INTRO = '보내려는 답장을 붙여 넣어 주세요. 상대에게 어떻게 들릴지 보고, 더 나은 문장을 같이 찾아볼게요.';
 
-/** 답장 다듬기: 토닥이의 안내로 시작하는 새 대화 */
+/** 답장 다듬기: 투닥이의 안내로 시작하는 새 대화 */
 export function startRefine(navigate: (to: string) => void) {
   const thread = createThread({ id: newId(), at: Date.now(), role: 'agent', kind: 'note', text: REFINE_INTRO });
   navigate(`/chat/${thread.id}`);
@@ -50,16 +50,16 @@ export function Home() {
   return (
     <main className="screen with-tabbar home">
       <section className="hero-card">
-        <Mascot size={176} label="말풍선 모양의 캐릭터 토닥이" className="hero-mascot" />
+        <Mascot size={176} label="말풍선 모양의 캐릭터 투닥이" className="hero-mascot" />
         <h1 className="title-1 center">오늘은 어떤 대화였어요?</h1>
         <p className="body muted center">
           다툰 대화를 캡처해 보내거나,
           <br />
           그냥 털어놔도 괜찮아요
         </p>
-        <Composer variant="hero" placeholder="토닥이에게 말 걸기" onSubmit={start} pickSignal={pickSignal} />
+        <Composer variant="hero" placeholder="투닥이에게 말 걸기" onSubmit={start} pickSignal={pickSignal} />
         <p className="fine-print center">
-          토닥이는 생성형 AI예요. 전문 상담을 대신하지 않아요.
+          투닥이는 생성형 AI예요. 전문 상담을 대신하지 않아요.
           <br />
           캡처는 분석에만 쓰고 저장하지 않아요.
         </p>

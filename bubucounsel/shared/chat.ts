@@ -7,7 +7,7 @@ export interface ChatTurn {
 }
 
 export interface ChatReply {
-  /** 토닥이의 답 (해요체, 짧게) */
+  /** 투닥이의 답 (해요체, 짧게) */
   reply: string;
   /** 바로 복사해 보낼 문장. 없으면 빈 문자열 */
   suggestion: string;

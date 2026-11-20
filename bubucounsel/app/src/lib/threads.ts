@@ -4,7 +4,7 @@ import { SAMPLE_ANALYSIS } from '../../../shared/sample';
 import { storage } from './toss';
 
 /**
- * 토닥이와 나눈 대화(스레드). 이 기기에만 저장한다.
+ * 투닥이와 나눈 대화(스레드). 이 기기에만 저장한다.
  * 원본 캡처 이미지는 저장하지 않고, 몇 장 보냈는지만 남긴다.
  */
 export type Message =
