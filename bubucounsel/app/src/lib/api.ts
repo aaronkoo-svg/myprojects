@@ -1,41 +1,46 @@
 import type { AnalyzeEvent, AnalyzeRequest } from '../../../shared/analysis';
+import type { ChatEvent, ChatRequest } from '../../../shared/chat';
 
 const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 
 /** 분석 서버가 연결돼 있는지. 없으면 예시 체험만 가능하다. */
 export const apiConfigured = API_URL !== '';
 
-/** 분석을 요청하고, 서버가 보내는 이벤트를 순서대로 넘겨준다. */
-export async function analyze(
-  body: AnalyzeRequest,
-  onEvent: (event: AnalyzeEvent) => void,
+type StreamEvent = { type: string };
+
+/** 서버가 보내는 이벤트를 순서대로 넘겨준다. 끝나지 않고 끊기면 실패로 알린다. */
+async function streamPost<E extends StreamEvent>(
+  path: string,
+  body: unknown,
+  onEvent: (event: E) => void,
+  failed: E,
   signal?: AbortSignal,
 ): Promise<void> {
   let response: Response;
   try {
-    response = await fetch(`${API_URL}/analyze`, {
+    response = await fetch(`${API_URL}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       signal,
     });
   } catch {
-    onEvent({ type: 'error', code: 'ai_failed' });
+    if (!signal?.aborted) onEvent(failed);
     return;
   }
 
   if (!response.headers.get('Content-Type')?.includes('text/event-stream')) {
     try {
-      onEvent((await response.json()) as AnalyzeEvent);
+      onEvent((await response.json()) as E);
     } catch {
-      onEvent({ type: 'error', code: 'ai_failed' });
+      onEvent(failed);
     }
     return;
   }
 
   const reader = response.body?.getReader();
   if (!reader) {
-    onEvent({ type: 'error', code: 'ai_failed' });
+    onEvent(failed);
     return;
   }
   const decoder = new TextDecoder();
@@ -51,7 +56,7 @@ export async function analyze(
         const chunk = buffer.slice(0, boundary);
         buffer = buffer.slice(boundary + 2);
         if (chunk.startsWith('data: ')) {
-          const event = JSON.parse(chunk.slice(6)) as AnalyzeEvent;
+          const event = JSON.parse(chunk.slice(6)) as E;
           if (event.type !== 'snapshot') finished = true;
           onEvent(event);
         }
@@ -61,7 +66,15 @@ export async function analyze(
   } catch {
     /* 연결이 끊기면 아래에서 실패로 알린다 */
   }
-  if (!finished && !signal?.aborted) onEvent({ type: 'error', code: 'ai_failed' });
+  if (!finished && !signal?.aborted) onEvent(failed);
+}
+
+export function analyze(body: AnalyzeRequest, onEvent: (event: AnalyzeEvent) => void, signal?: AbortSignal) {
+  return streamPost<AnalyzeEvent>('/analyze', body, onEvent, { type: 'error', code: 'ai_failed' }, signal);
+}
+
+export function chat(body: ChatRequest, onEvent: (event: ChatEvent) => void, signal?: AbortSignal) {
+  return streamPost<ChatEvent>('/chat', body, onEvent, { type: 'error', code: 'ai_failed' }, signal);
 }
 
 export type FeedbackReason = 'biased' | 'misread' | 'awkward' | 'other';

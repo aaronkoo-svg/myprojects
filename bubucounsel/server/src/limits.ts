@@ -2,6 +2,8 @@ import type { Quota } from '../../shared/analysis';
 
 export const FREE_PER_DAY = 1;
 export const MAX_PER_DAY = 3;
+/** 글로만 주고받는 대화는 훨씬 싸서 따로 센다. */
+export const CHAT_PER_DAY = 20;
 
 /**
  * 사용자별 하루 사용 횟수 저장소.
@@ -49,8 +51,12 @@ export function kstDate(now: Date = new Date()): string {
   return new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
-export function usageKey(userId: string, now?: Date): string {
-  return `${kstDate(now)}:${userId}`;
+export function usageKey(userId: string, now?: Date, kind: 'analyze' | 'chat' = 'analyze'): string {
+  return kind === 'chat' ? `${kstDate(now)}:chat:${userId}` : `${kstDate(now)}:${userId}`;
+}
+
+export function chatQuotaOf(used: number): Quota {
+  return { used, free: CHAT_PER_DAY, max: CHAT_PER_DAY };
 }
 
 export function quotaOf(used: number): Quota {

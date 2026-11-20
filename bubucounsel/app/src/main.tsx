@@ -6,10 +6,10 @@ import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import { App } from './App';
 import { DIRECT_MODE } from './lib/directSettings';
-import { loadHistory } from './lib/history';
+import { loadThreads } from './lib/threads';
 import { preloadAd } from './lib/toss';
 
-void loadHistory();
+void loadThreads();
 if (DIRECT_MODE) void import('./lib/native').then((m) => m.setupNative());
 preloadAd();
 

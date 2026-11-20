@@ -40,7 +40,10 @@ export function personalize(text: string, meIsA: boolean): string {
   });
 }
 
-export function formatDate(timestamp: number): string {
+export function formatDate(timestamp: number, now = new Date()): string {
   const date = new Date(timestamp);
+  const days = Math.round((new Date(now).setHours(0, 0, 0, 0) - new Date(timestamp).setHours(0, 0, 0, 0)) / 86_400_000);
+  if (days === 0) return '오늘';
+  if (days === 1) return '어제';
   return `${date.getMonth() + 1}월 ${date.getDate()}일`;
 }

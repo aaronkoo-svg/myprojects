@@ -1,8 +1,8 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { Readable } from 'node:stream';
-import { createClaudeAnalyzer, type Effort } from './analyze';
-import { fakeAnalyzer } from './fake';
+import { createClaudeAnalyzer, createClaudeChatter, type Effort } from './analyze';
+import { fakeAnalyzer, fakeChatter } from './fake';
 import { createHandler } from './handler';
 import { kstDate, MemoryUsageStore } from './limits';
 
@@ -17,14 +17,14 @@ setInterval(() => usage.prune(kstDate()), 60 * 60 * 1000).unref();
 
 const model = env.ANALYSIS_MODEL ?? 'claude-opus-5-5';
 const fake = env.FAKE_ANALYZER === '1';
+const claudeConfig = {
+  model,
+  effort: (env.ANALYSIS_EFFORT || undefined) as Effort | undefined,
+  useFallbacks: env.ANALYSIS_FALLBACKS !== '0',
+};
 const handle = createHandler({
-  analyzer: fake
-    ? fakeAnalyzer
-    : createClaudeAnalyzer({
-        model,
-        effort: (env.ANALYSIS_EFFORT || undefined) as Effort | undefined,
-        useFallbacks: env.ANALYSIS_FALLBACKS !== '0',
-      }),
+  analyzer: fake ? fakeAnalyzer : createClaudeAnalyzer(claudeConfig),
+  chatter: fake ? fakeChatter : createClaudeChatter(claudeConfig),
   usage,
   auth: {
     tossCert: readPem(env.TOSS_MTLS_CERT, env.TOSS_MTLS_CERT_FILE),

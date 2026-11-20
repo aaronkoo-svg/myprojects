@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Analysis, AnalyzeEvent } from '../../shared/analysis';
-import type { Analyzer } from '../src/analyze';
+import type { Analyzer, Chatter } from '../src/analyze';
 import { createHandler, type Deps } from '../src/handler';
 import { admit, kstDate, MemoryUsageStore } from '../src/limits';
 import { normalize } from '../src/schema';
@@ -27,10 +27,16 @@ const okAnalyzer: Analyzer = async ({ onSnapshot }) => {
   return { ok: true, analysis: sample, usage: { inputTokens: 1, outputTokens: 1, model: 'test' } };
 };
 
+const okChatter: Chatter = async ({ onSnapshot }) => {
+  onSnapshot({ reply: '그랬' });
+  return { ok: true, reply: { reply: '그랬군요.', suggestion: '' }, usage: { inputTokens: 1, outputTokens: 1, model: 'test' } };
+};
+
 function setup(overrides: Partial<Deps> = {}) {
   const usage = new MemoryUsageStore();
   const handle = createHandler({
     analyzer: okAnalyzer,
+    chatter: okChatter,
     usage,
     auth: { allowDevAuth: true },
     allowedOrigins: [ORIGIN],
@@ -151,5 +157,44 @@ describe('JSON 스키마', () => {
     const { analysisSchema } = await import('../src/schema');
     expect([...ANALYSIS_JSON_SCHEMA.required].sort()).toEqual(Object.keys(analysisSchema.shape).sort());
     expect(analysisSchema.safeParse(sample).success).toBe(true);
+  });
+});
+
+describe('POST /chat', () => {
+  const chatPost = (handle: (r: Request) => Promise<Response>, body: unknown) =>
+    handle(
+      new Request('http://localhost/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+        body: JSON.stringify(body),
+      }),
+    );
+
+  it('답을 흘려보내고 대화 횟수를 분석 횟수와 따로 센다', async () => {
+    const { handle, usage } = setup();
+    const response = await chatPost(handle, { message: '서운했어', history: [], meIsA: true, devUser: 'u1', analysis: sample });
+    const list = await events(response);
+    expect(list.map((e) => e.type)).toEqual(['snapshot', 'done']);
+    expect(await usage.get(`${kstDate()}:chat:dev:u1`)).toBe(1);
+    expect(await usage.get(`${kstDate()}:dev:u1`)).toBe(0);
+  });
+
+  it('빈 메시지, 너무 긴 기록, 형식이 틀린 분석은 거절한다', async () => {
+    const { handle } = setup();
+    expect((await chatPost(handle, { message: '  ', history: [], meIsA: true, devUser: 'u1' })).status).toBe(400);
+    const long = Array.from({ length: 13 }, () => ({ role: 'user', text: 'a' }));
+    expect((await chatPost(handle, { message: 'a', history: long, meIsA: true, devUser: 'u1' })).status).toBe(400);
+    expect((await chatPost(handle, { message: 'a', history: [], meIsA: true, devUser: 'u1', analysis: { kind: 'x' } })).status).toBe(400);
+  });
+
+  it('하루 20번을 넘으면 막는다', async () => {
+    const { handle } = setup();
+    for (let i = 0; i < 20; i++) {
+      const r = await chatPost(handle, { message: 'a', history: [], meIsA: true, devUser: 'u2' });
+      await r.text();
+      expect(r.status).toBe(200);
+    }
+    const blocked = await chatPost(handle, { message: 'a', history: [], meIsA: true, devUser: 'u2' });
+    expect(blocked.status).toBe(429);
   });
 });

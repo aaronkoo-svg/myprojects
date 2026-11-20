@@ -1,11 +1,14 @@
 import { z } from 'zod';
 import { LIMITS, type AnalyzeErrorCode, type AnalyzeEvent, type Quota } from '../../shared/analysis';
-import type { Analyzer } from './analyze';
+import { CHAT_LIMITS, type ChatEvent } from '../../shared/chat';
+import type { Analyzer, Chatter } from './analyze';
 import { authenticate, type AuthConfig, type exchangeAuthCode } from './auth';
-import { admit, quotaOf, usageKey, type UsageStore } from './limits';
+import { admit, CHAT_PER_DAY, chatQuotaOf, quotaOf, usageKey, type UsageStore } from './limits';
+import { analysisSchema } from './schema';
 
 export interface Deps {
   analyzer: Analyzer;
+  chatter: Chatter;
   usage: UsageStore;
   auth: AuthConfig;
   allowedOrigins: string[];
@@ -27,6 +30,17 @@ const requestSchema = z.object({
   authCode: z.string().max(2048).optional(),
   devUser: z.string().max(64).optional(),
   adWatched: z.boolean().optional(),
+});
+
+const chatRequestSchema = z.object({
+  message: z.string().trim().min(1).max(CHAT_LIMITS.maxMessageChars),
+  history: z
+    .array(z.object({ role: z.enum(['user', 'agent']), text: z.string().max(CHAT_LIMITS.maxHistoryChars) }))
+    .max(CHAT_LIMITS.maxHistory),
+  analysis: analysisSchema.optional(),
+  meIsA: z.boolean(),
+  authCode: z.string().max(2048).optional(),
+  devUser: z.string().max(64).optional(),
 });
 
 const feedbackSchema = z.object({
@@ -67,6 +81,9 @@ export function createHandler(deps: Deps) {
     if (request.method === 'POST' && url.pathname === '/analyze') {
       return analyze(request, cors);
     }
+    if (request.method === 'POST' && url.pathname === '/chat') {
+      return chat(request, cors);
+    }
     return new Response('Not found', { status: 404, headers: cors });
   };
 
@@ -91,51 +108,90 @@ export function createHandler(deps: Deps) {
       return fail('limit_daily_max', cors, quotaOf(used - 1));
     }
 
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream<Uint8Array>({
-      start: async (controller) => {
-        let closed = false;
-        const send = (event: AnalyzeEvent) => {
-          if (closed) return;
-          try {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-          } catch {
-            closed = true;
-          }
-        };
+    return sse<AnalyzeEvent>(cors, async (send) => {
+      const outcome = await deps.analyzer({
+        images: body.images,
+        context: body.context,
+        onSnapshot: (analysis) => send({ type: 'snapshot', analysis }),
+        signal: request.signal,
+      });
 
-        const outcome = await deps.analyzer({
-          images: body.images,
-          context: body.context,
-          onSnapshot: (analysis) => send({ type: 'snapshot', analysis }),
-          signal: request.signal,
-        });
-
-        if (outcome.ok) {
-          console.log(
-            `[analyze] ok model=${outcome.usage.model} images=${body.images.length} in=${outcome.usage.inputTokens} out=${outcome.usage.outputTokens}`,
-          );
-          send({ type: 'done', analysis: outcome.analysis, quota: quotaOf(used) });
-        } else {
-          // 실패한 분석은 횟수에서 뺀다.
-          await deps.usage.decrement(key);
-          send({ type: 'error', code: outcome.code, quota: quotaOf(used - 1) });
-        }
-        closed = true;
-        controller.close();
-      },
-    });
-
-    return new Response(stream, {
-      status: 200,
-      headers: {
-        ...cors,
-        'Content-Type': 'text/event-stream; charset=utf-8',
-        'Cache-Control': 'no-store',
-        'X-Accel-Buffering': 'no',
-      },
+      if (outcome.ok) {
+        console.log(
+          `[analyze] ok model=${outcome.usage.model} images=${body.images.length} in=${outcome.usage.inputTokens} out=${outcome.usage.outputTokens}`,
+        );
+        send({ type: 'done', analysis: outcome.analysis, quota: quotaOf(used) });
+      } else {
+        // 실패한 분석은 횟수에서 뺀다.
+        await deps.usage.decrement(key);
+        send({ type: 'error', code: outcome.code, quota: quotaOf(used - 1) });
+      }
     });
   }
+
+  async function chat(request: Request, cors: Record<string, string>): Promise<Response> {
+    const parsed = chatRequestSchema.safeParse(await readJson(request));
+    if (!parsed.success) return fail('bad_request', cors);
+    const body = parsed.data;
+
+    const auth = await authenticate(body, deps.auth, deps.exchange);
+    if (!auth.ok) return fail('unauthorized', cors);
+
+    const key = usageKey(auth.userId, now(), 'chat');
+    const used = await deps.usage.increment(key);
+    if (used > CHAT_PER_DAY) {
+      await deps.usage.decrement(key);
+      return fail('limit_daily_max', cors, chatQuotaOf(used - 1));
+    }
+
+    return sse<ChatEvent>(cors, async (send) => {
+      const outcome = await deps.chatter({
+        message: body.message,
+        history: body.history,
+        analysis: body.analysis,
+        meIsA: body.meIsA,
+        onSnapshot: (reply) => send({ type: 'snapshot', reply }),
+        signal: request.signal,
+      });
+      if (outcome.ok) {
+        console.log(`[chat] ok model=${outcome.usage.model} in=${outcome.usage.inputTokens} out=${outcome.usage.outputTokens}`);
+        send({ type: 'done', reply: outcome.reply, quota: chatQuotaOf(used) });
+      } else {
+        await deps.usage.decrement(key);
+        send({ type: 'error', code: outcome.code, quota: chatQuotaOf(used - 1) });
+      }
+    });
+  }
+}
+
+/** 이벤트를 차례로 흘려보내는 응답 */
+function sse<E>(cors: Record<string, string>, run: (send: (event: E) => void) => Promise<void>): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start: async (controller) => {
+      let closed = false;
+      const send = (event: E) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        } catch {
+          closed = true;
+        }
+      };
+      await run(send);
+      closed = true;
+      controller.close();
+    },
+  });
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      ...cors,
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Accel-Buffering': 'no',
+    },
+  });
 }
 
 function fail(code: AnalyzeErrorCode, cors: Record<string, string>, quota?: Quota): Response {

@@ -1,8 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { parse as parsePartial } from 'partial-json';
+import { z } from 'zod';
+import type { ChatReply, ChatTurn } from '../../shared/chat';
 import type { Analysis, PartialAnalysis, UploadImage } from '../../shared/analysis';
-import { SYSTEM_PROMPT, userText } from '../../shared/prompt';
+import { CHAT_SYSTEM_PROMPT, chatUserText, SYSTEM_PROMPT, userText } from '../../shared/prompt';
 import { analysisSchema, normalize } from './schema';
 
 export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
@@ -108,4 +110,77 @@ function tryParsePartial(text: string): PartialAnalysis | null {
   } catch {
     return null;
   }
+}
+
+/* ── 채팅 ─────────────────────────────────────────────── */
+
+export interface ChatInput {
+  message: string;
+  history: ChatTurn[];
+  analysis?: Analysis;
+  meIsA: boolean;
+  onSnapshot: (partial: Partial<ChatReply>) => void;
+  signal?: AbortSignal;
+}
+
+export type ChatOutcome =
+  | { ok: true; reply: ChatReply; usage: { inputTokens: number; outputTokens: number; model: string } }
+  | { ok: false; code: 'refused' | 'ai_failed' };
+
+export type Chatter = (input: ChatInput) => Promise<ChatOutcome>;
+
+const chatSchema = z.object({ reply: z.string(), suggestion: z.string() });
+
+/** 글로만 이어지는 대화. 이미지를 보내지 않아 분석보다 훨씬 가볍다. */
+export function createClaudeChatter(config: ClaudeConfig, client = new Anthropic()): Chatter {
+  return async ({ message, history, analysis, meIsA, onSnapshot, signal }) => {
+    try {
+      const stream = client.beta.messages.stream(
+        {
+          model: config.model,
+          max_tokens: 4000,
+          system: CHAT_SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: chatUserText({ message, history, analysis, meIsA }) }],
+          output_config: {
+            format: zodOutputFormat(chatSchema),
+            ...(config.effort ? { effort: config.effort } : {}),
+          },
+          ...(config.useFallbacks
+            ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const }
+            : {}),
+        },
+        { signal },
+      );
+
+      let text = '';
+      let lastSent = 0;
+      stream.on('text', (delta) => {
+        text += delta;
+        const now = Date.now();
+        if (now - lastSent < SNAPSHOT_INTERVAL_MS) return;
+        lastSent = now;
+        const partial = tryParsePartial(text);
+        if (partial) onSnapshot(partial as Partial<ChatReply>);
+      });
+
+      const result = await stream.finalMessage();
+      if (result.stop_reason === 'refusal') return { ok: false, code: 'refused' };
+      if (result.stop_reason !== 'end_turn') return { ok: false, code: 'ai_failed' };
+      const finalText = result.content
+        .filter((block): block is Anthropic.Beta.BetaTextBlock => block.type === 'text')
+        .map((block) => block.text)
+        .join('');
+      const parsed = chatSchema.safeParse(JSON.parse(finalText));
+      if (!parsed.success) return { ok: false, code: 'ai_failed' };
+      return {
+        ok: true,
+        reply: parsed.data,
+        usage: { inputTokens: result.usage.input_tokens, outputTokens: result.usage.output_tokens, model: result.model },
+      };
+    } catch (error) {
+      const name = error instanceof Anthropic.APIError ? `${error.name} ${error.status ?? ''}` : (error as Error).name;
+      console.error('[chat] failed:', name);
+      return { ok: false, code: 'ai_failed' };
+    }
+  };
 }

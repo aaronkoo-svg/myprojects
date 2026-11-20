@@ -1,27 +1,28 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { BottomBar, Button } from '../components/ui';
 import { DIRECT_MODELS, getDirectSettings, saveDirectSettings } from '../lib/directSettings';
-import { startAnalysis, useDraft } from '../lib/job';
+import { dismissError, useRun } from '../lib/run';
 
 /** 테스트 APK 전용 설정 화면. 토스 출시용 빌드에는 없다. */
 export function Settings() {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const draft = useDraft();
+  const run = useRun();
   const initial = getDirectSettings();
   const [apiKey, setApiKey] = useState(initial.apiKey);
   const [model, setModel] = useState(initial.model);
   const [shown, setShown] = useState(false);
-  const resume = params.get('resume') === '1' && draft.photos.length > 0;
   const looksValid = apiKey.trim().startsWith('sk-ant-');
 
   const save = () => {
     saveDirectSettings({ apiKey, model });
-    if (resume && apiKey.trim()) {
-      void startAnalysis();
-      navigate('/result/new', { replace: true });
-    } else navigate(-1);
+    // 키가 없어 멈췄던 응답이 있으면 돌아가서 바로 다시 시도한다.
+    if (run.status === 'error' && (run.code === 'no_key' || run.code === 'bad_key') && apiKey.trim()) {
+      const retry = run.retry;
+      dismissError();
+      retry();
+    }
+    navigate(-1);
   };
 
   return (
@@ -94,7 +95,7 @@ export function Settings() {
       )}
 
       <BottomBar>
-        <Button onClick={save}>{resume && apiKey.trim() ? '저장하고 분석하기' : '저장하기'}</Button>
+        <Button onClick={save}>저장하기</Button>
       </BottomBar>
     </main>
   );

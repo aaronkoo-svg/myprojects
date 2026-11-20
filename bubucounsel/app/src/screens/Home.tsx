@@ -1,116 +1,131 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AiBadge, Button, TabBar } from '../components/ui';
+import { Composer, type ComposerInput } from '../components/Composer';
+import { Mascot } from '../components/Mascot';
+import { Icon, TabBar } from '../components/ui';
 import { DIRECT_MODE, getDirectSettings } from '../lib/directSettings';
-import { useHistory } from '../lib/history';
-import { setDraft } from '../lib/job';
 import { formatDate, personalize, TOPIC_LABEL } from '../lib/labels';
-import { MAX_PHOTOS, pickPhotos } from '../lib/toss';
+import { sendCaptures, sendText } from '../lib/run';
+import { createThread, latestAnalysis, newId, resetSample, SAMPLE_ID, threadTitle, useThreads, type Thread } from '../lib/threads';
 
-const PICK_ERROR = {
-  permission: '사진 접근이 꺼져 있어요. 오른쪽 위 더보기(⋯)의 권한 설정에서 켠 뒤 다시 눌러 주세요.',
-  unsupported: '토스 앱을 최신 버전으로 업데이트하면 사진을 올릴 수 있어요.',
-  failed: '사진을 불러오지 못했어요. 다시 한 번 눌러 주세요.',
-} as const;
+const DAY_NAMES = ['월', '화', '수', '목', '금', '토', '일'];
+
+/** 이번 주 월요일부터 일요일까지 */
+function thisWeek(now = new Date()) {
+  const monday = new Date(now);
+  monday.setHours(0, 0, 0, 0);
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  return DAY_NAMES.map((name, i) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i);
+    return { name, date, isToday: date.toDateString() === now.toDateString(), isFuture: date > now };
+  });
+}
+
+export const REFINE_INTRO = '보내려는 답장을 붙여 넣어 주세요. 상대에게 어떻게 들릴지 보고, 더 나은 문장을 같이 찾아볼게요.';
+
+/** 답장 다듬기: 토닥이의 안내로 시작하는 새 대화 */
+export function startRefine(navigate: (to: string) => void) {
+  const thread = createThread({ id: newId(), at: Date.now(), role: 'agent', kind: 'note', text: REFINE_INTRO });
+  navigate(`/chat/${thread.id}`);
+}
 
 export function Home() {
   const navigate = useNavigate();
-  const { items } = useHistory();
-  const [error, setError] = useState<keyof typeof PICK_ERROR | null>(null);
-  const [picking, setPicking] = useState(false);
+  const { threads } = useThreads();
+  const [pickSignal, setPickSignal] = useState(0);
+  const week = thisWeek();
+  const weekStart = week[0]!.date.getTime();
+  const thisWeekThreads = threads.filter((t) => t.createdAt >= weekStart);
+  const talkedOn = new Set(thisWeekThreads.map((t) => new Date(t.createdAt).toDateString()));
+  const recent = threads[0];
 
-  const upload = async () => {
-    setError(null);
-    setPicking(true);
-    const result = await pickPhotos(MAX_PHOTOS);
-    setPicking(false);
-    if (!result.ok) {
-      setError(result.reason);
-      return;
-    }
-    if (result.dataUrls.length === 0) return;
-    setDraft({ photos: result.dataUrls, context: '' });
-    navigate('/preview');
+  const start = ({ text, photos }: ComposerInput) => {
+    const thread = createThread();
+    navigate(`/chat/${thread.id}`);
+    if (photos.length > 0) sendCaptures(thread.id, photos, text);
+    else sendText(thread.id, text);
   };
 
   return (
-    <main className="screen with-tabbar">
-      <header className="hero">
-        <h1 className="title-1">
-          다툰 대화,
+    <main className="screen with-tabbar home">
+      <section className="hero-card">
+        <Mascot size={176} label="말풍선 모양의 캐릭터 토닥이" className="hero-mascot" />
+        <h1 className="title-1 center">오늘은 어떤 대화였어요?</h1>
+        <p className="body muted center">
+          다툰 대화를 캡처해 보내거나,
           <br />
-          같이 살펴봐요
-        </h1>
-        <p className="body muted">
-          메신저 대화 캡처를 올리면 어디서 엇갈렸는지, 지금 뭐라고 보내면 좋을지 알려 드려요.
+          그냥 털어놔도 괜찮아요
         </p>
-      </header>
-
-      <section className="card upload-card">
-        <div className="upload-icon" aria-hidden="true">
-          <svg viewBox="0 0 48 48" width="44" height="44" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v14a5 5 0 0 1-5 5H22l-9 7v-7.2A5 5 0 0 1 9 26z" />
-            <path d="M17 16h14M17 22h9" />
-          </svg>
-        </div>
-        <Button onClick={upload} disabled={picking}>
-          대화 캡처 올리기
-        </Button>
-        <p className="caption muted center">최대 {MAX_PHOTOS}장 · 길게 이어 붙인 캡처도 괜찮아요</p>
-        {error && (
-          <p className="notice-error" role="alert">
-            {PICK_ERROR[error]}
-          </p>
-        )}
+        <Composer variant="hero" placeholder="토닥이에게 말 걸기" onSubmit={start} pickSignal={pickSignal} />
+        <p className="fine-print center">
+          토닥이는 생성형 AI예요. 전문 상담을 대신하지 않아요.
+          <br />
+          캡처는 분석에만 쓰고 저장하지 않아요.
+        </p>
       </section>
 
-      <div className="center">
-        <Link to="/result/sample" className="btn btn-text">
-          예시로 먼저 보기
+      <div className="quick-actions">
+        <button type="button" className="chip-action" onClick={() => setPickSignal((n) => n + 1)}>
+          <span className="tint-blue"><Icon.photo size={18} /></span>캡처로 분석
+        </button>
+        <button type="button" className="chip-action" onClick={() => startRefine(navigate)}>
+          <span className="tint-orange"><Icon.pencil size={18} /></span>답장 다듬기
+        </button>
+        <Link to={`/chat/${SAMPLE_ID}`} className="chip-action" onClick={resetSample}>
+          <span className="tint-green"><Icon.sample size={18} /></span>예시 보기
         </Link>
       </div>
 
       {DIRECT_MODE && (
-        <Link to="/settings" className="card test-banner">
+        <Link to="/settings" className="test-banner">
           <span className="body-strong">테스트 버전</span>
-          <span className="caption muted">
-            {getDirectSettings().apiKey ? '내 API 키로 분석해요 · 설정 바꾸기' : 'API 키를 넣어야 분석할 수 있어요 · 설정하기'}
-          </span>
+          <span className="caption">{getDirectSettings().apiKey ? '내 API 키로 답해요 · 설정 바꾸기' : 'API 키를 넣어야 답할 수 있어요 · 설정하기'}</span>
         </Link>
       )}
 
-      <ul className="notice-list">
-        <li>
-          <AiBadge /> 결과는 생성형 AI가 만들어요. 전문 상담을 대신하지 않아요.
-        </li>
-        <li>캡처는 분석을 위해 AI 서비스로 전송되고, 저희 서버에는 저장하지 않아요.</li>
-        <li>분석 결과는 이 기기에만 보관돼요.</li>
-      </ul>
-
-      {items.length > 0 && (
-        <section className="section">
-          <div className="section-head">
-            <h2 className="title-2">최근 분석</h2>
-            <Link to="/history" className="link">
-              전체 보기
-            </Link>
-          </div>
-          <ul className="record-list">
-            {items.slice(0, 2).map((item) => (
-              <li key={item.id}>
-                <Link to={`/result/${item.id}`} className="record">
-                  <span className="record-summary">{personalize(item.analysis.summary, item.meIsA)}</span>
-                  <span className="caption muted">
-                    {formatDate(item.createdAt)} · {TOPIC_LABEL[item.analysis.topic]}
-                  </span>
-                </Link>
+      <section className="section">
+        <div className="section-head">
+          <h2 className="title-2">이번 주</h2>
+          <span className="caption muted">{thisWeekThreads.length > 0 ? `대화 ${thisWeekThreads.length}번` : '아직 대화가 없어요'}</span>
+        </div>
+        <ol className="week" aria-label="이번 주 대화한 날">
+          {week.map((day) => {
+            const talked = talkedOn.has(day.date.toDateString());
+            return (
+              <li key={day.name} className={`day ${day.isToday ? 'today' : ''} ${day.isFuture ? 'future' : ''}`} aria-label={`${day.name}요일 ${day.date.getDate()}일${talked ? ', 대화함' : ''}`}>
+                <span className="day-name">{day.name}</span>
+                <span className="day-date">{day.date.getDate()}</span>
+                <span className={`day-dot ${talked ? 'on' : ''}`} />
               </li>
-            ))}
-          </ul>
-        </section>
-      )}
+            );
+          })}
+        </ol>
+      </section>
+
+      {recent && <RecentCard thread={recent} />}
 
       <TabBar />
     </main>
+  );
+}
+
+function RecentCard({ thread }: { thread: Thread }) {
+  const found = latestAnalysis(thread);
+  const topic = found?.analysis.kind === 'analysis' ? TOPIC_LABEL[found.analysis.topic] : null;
+  return (
+    <Link to={`/chat/${thread.id}`} className="recent">
+      <span className="recent-icon" aria-hidden="true">
+        <Icon.clock />
+      </span>
+      <span className="recent-text">
+        <span className="recent-title">{personalize(threadTitle(thread), thread.meIsA)}</span>
+        <span className="caption muted">
+          {formatDate(thread.updatedAt)}
+          {topic ? ` · ${topic}` : ''} · 이어서 대화하기
+        </span>
+      </span>
+      <Icon.chevron size={18} />
+    </Link>
   );
 }
